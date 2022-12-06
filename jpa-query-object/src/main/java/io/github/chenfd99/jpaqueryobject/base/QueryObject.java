@@ -1,7 +1,7 @@
-package com.github.chenfd99.jpaqueryobject.base;
+package io.github.chenfd99.jpaqueryobject.base;
 
-import com.github.chenfd99.jpaqueryobject.annotation.QFiled;
-import com.github.chenfd99.jpaqueryobject.annotation.QOrderBy;
+import io.github.chenfd99.jpaqueryobject.annotation.QFiled;
+import io.github.chenfd99.jpaqueryobject.annotation.QOrderBy;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;

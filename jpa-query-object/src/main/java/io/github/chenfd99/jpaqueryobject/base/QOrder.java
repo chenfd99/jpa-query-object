@@ -1,4 +1,4 @@
-package com.github.chenfd99.jpaqueryobject.base;
+package io.github.chenfd99.jpaqueryobject.base;
 
 public enum QOrder {
     /**

@@ -1,8 +1,8 @@
-package com.github.chenfd99.jpaqueryobject.annotation;
+package io.github.chenfd99.jpaqueryobject.annotation;
 
 
 
-import com.github.chenfd99.jpaqueryobject.base.QType;
+import io.github.chenfd99.jpaqueryobject.base.QType;
 
 import java.lang.annotation.*;
 

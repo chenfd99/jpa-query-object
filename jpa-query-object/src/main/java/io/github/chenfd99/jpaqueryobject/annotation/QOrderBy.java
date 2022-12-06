@@ -1,4 +1,4 @@
-package com.github.chenfd99.jpaqueryobject.annotation;
+package io.github.chenfd99.jpaqueryobject.annotation;
 
 
 import java.lang.annotation.*;
