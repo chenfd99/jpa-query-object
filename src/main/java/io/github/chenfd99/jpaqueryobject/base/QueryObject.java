@@ -1,15 +1,6 @@
 package io.github.chenfd99.jpaqueryobject.base;
 
 import io.github.chenfd99.jpaqueryobject.annotation.QFiled;
-import io.github.chenfd99.jpaqueryobject.annotation.QOrderBy;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import javax.persistence.criteria.*;
@@ -21,119 +12,34 @@ import java.util.stream.Collectors;
 /**
  * 基础查询类
  */
-@Slf4j
-@Getter
-@Setter
-@ToString
 public abstract class QueryObject<T> implements Specification<T> {
-    protected int pageNo = 0;
-    protected int pageSize = 10;
 
-    @Setter(AccessLevel.NONE)
-    @Getter(AccessLevel.PROTECTED)
-    private List<Field> fieldList;
 
     @Override
     public Predicate toPredicate(Root<T> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
-        List<Predicate> predicates = toSpecWithLogicType(root, criteriaQuery, criteriaBuilder);
+        List<Predicate> predicates = toSpecWithLogicType(root, criteriaBuilder);
         return criteriaQuery.where(predicates.toArray(new Predicate[0])).getRestriction();
     }
 
 
     /**
-     * 获取分页
-     */
-    public Pageable getPageable() {
-        return PageRequest.of(pageNo, pageSize, getSort());
-    }
-
-
-    /**
-     * 获取排序
-     */
-    public Sort getSort() {
-        List<Sort.Order> orders = getSortOrder();
-
-        if (orders == null || orders.isEmpty()) {
-            return Sort.unsorted();
-        }
-
-        return Sort.by(orders);
-    }
-
-
-    /**
-     * 获取排序字段
-     */
-    protected List<Sort.Order> getSortOrder() {
-        List<Sort.Order> orders = new ArrayList<>();
-
-        getAllFields().forEach(field -> {
-            QOrderBy[] orderByArray = field.getAnnotationsByType(QOrderBy.class);
-            if (orderByArray == null || orderByArray.length == 0) {
-                return;
-            }
-            if (!QOrder.class.isAssignableFrom(field.getType())) {
-                return;
-            }
-
-            try {
-                field.setAccessible(true);
-                QOrder qOrder = (QOrder) field.get(this);
-                if (qOrder == null) {
-                    return;
-                }
-                Arrays.stream(orderByArray)
-                        .sorted(Comparator.comparing(QOrderBy::order))
-                        .forEach(orderBy -> {
-                            if (orderBy.value() == null || orderBy.value().trim().isEmpty()) {
-                                return;
-                            }
-
-                            Optional<Sort.Direction> direction = Sort.Direction.fromOptionalString(qOrder.name());
-                            if (!direction.isPresent()) {
-                                return;
-                            }
-
-                            orders.add(new Sort.Order(direction.get(), orderBy.value()));
-                        });
-            } catch (IllegalAccessException e) {
-                log.error("getSortOrder error", e);
-            }
-        });
-
-        return orders.stream().filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
-
-    /**
-     * 获取所有的属性
+     * 获取所有的字段
      */
     protected List<Field> getAllFields() {
-        if (fieldList != null) {
-            return fieldList;
-        }
-
-        fieldList = new ArrayList<>();
+        List<Field> fieldList = new ArrayList<>();
         Class<?> searchType = getClass();
         while (searchType != null) {
-            Field[] fields = searchType.getDeclaredFields();
-            fieldList.addAll(Arrays.asList(fields));
+            fieldList.addAll(Arrays.asList(searchType.getDeclaredFields()));
             searchType = searchType.getSuperclass();
         }
-
         return fieldList;
     }
 
 
-    protected List<Predicate> toSpecWithLogicType(Root<T> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder cb) {
+    protected List<Predicate> toSpecWithLogicType(Root<T> root, CriteriaBuilder cb) {
         List<Field> fields = getAllFields();
         List<Predicate> predicates = new ArrayList<>();
         for (Field field : fields) {
-            if (QOrder.class.isAssignableFrom(field.getType())) {
-                continue;
-            }
-
             QFiled qf = field.getAnnotation(QFiled.class);
             QFiled.QGroup qg = field.getAnnotation(QFiled.QGroup.class);
             if (qf == null && qg == null) {
@@ -141,18 +47,15 @@ public abstract class QueryObject<T> implements Specification<T> {
             }
 
             if (qf != null) {
-                predicates.add(createPredicate(root, cb, field, qf));
+                Optional.ofNullable(createPredicate(root, cb, field, qf)).ifPresent(predicates::add);
             }
 
             if (qg != null && qg.type() != null && qg.value() != null && qg.value().length != 0) {
-                List<Predicate> groupPredicates = new ArrayList<>();
-                for (QFiled qFiled : qg.value()) {
-                    groupPredicates.add(createPredicate(root, cb, field, qFiled));
-                }
-
-                groupPredicates = groupPredicates.stream()
+                List<Predicate> groupPredicates = Arrays.stream(qg.value())
+                        .map(qFiled -> createPredicate(root, cb, field, qFiled))
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList());
+
                 if (groupPredicates.isEmpty()) {
                     continue;
                 }
@@ -171,9 +74,6 @@ public abstract class QueryObject<T> implements Specification<T> {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private Predicate createPredicate(Root<T> root, CriteriaBuilder cb, Field field, QFiled qf) {
-        if (QOrder.class.isAssignableFrom(field.getType())) {
-            return null;
-        }
         String column = qf.name();
         if (column == null || column.equals("")) column = field.getName();
 
@@ -181,7 +81,9 @@ public abstract class QueryObject<T> implements Specification<T> {
 
         try {
             Object value = field.get(this);
-            if (value == null) return null;
+            if (value == null) {
+                return null;
+            }
 
             if (String.class.isAssignableFrom(value.getClass()) && value.equals("")) {
                 return null;
@@ -195,7 +97,7 @@ public abstract class QueryObject<T> implements Specification<T> {
                     return cb.or(cb.equal(path, value), cb.isNull(path));
                 case NOT_EQUAL_OR_NULL:
                     return cb.or(cb.notEqual(path, value), cb.isNull(path));
-                case LIKE_ANYWHERE:
+                case LIKE:
                     return cb.like(path, "%" + value + "%");
                 case LIKE_START:
                     return cb.like(path, "%" + value);
@@ -215,28 +117,35 @@ public abstract class QueryObject<T> implements Specification<T> {
                     return cb.notLike(path, "%" + value + "%");
                 case GREATER_THAN:
                     return cb.greaterThan(path, (Comparable) value);
-                case GREATER_THAN_OR_EQUAL_TO:
+                case GREATER_THAN_OR_EQUAL:
                     return cb.greaterThanOrEqualTo(path, (Comparable) value);
                 case LESS_THAN:
                     return cb.lessThan(path, (Comparable) value);
-                case LESS_THAN_OR_EQUAL_TO:
+                case LESS_THAN_OR_EQUAL:
                     return cb.lessThanOrEqualTo(path, (Comparable) value);
+
+                case NOT_IN:
                 case IN: {
-                    if (field.getType().isArray() && ((Object[]) value).length != 0) {
+                    if (value instanceof Object[] && ((Object[]) value).length != 0) {
                         CriteriaBuilder.In in = cb.in(path);
                         Arrays.stream(((Object[]) value)).forEach(in::value);
-                        return in;
+                        return qf.value() == QType.IN ? cb.in(path) : cb.not(cb.in(path));
                     }
 
-                    if (Collection.class.isAssignableFrom(field.getType()) && ((Collection) value).size() != 0) {
+                    if (value instanceof Collection && ((Collection) value).size() != 0) {
                         CriteriaBuilder.In in = cb.in(path);
                         ((Collection) value).forEach(in::value);
-                        return in;
+                        return qf.value() == QType.IN ? cb.in(path) : cb.not(cb.in(path));
                     }
                 }
+
+                case IS_NULL:
+                    return cb.isNull(path);
+                case NOT_NULL:
+                    return cb.isNotNull(path);
             }
         } catch (Exception e) {
-            log.error("createPredicate error", e);
+            throw new RuntimeException(e);
         }
         return null;
     }

@@ -4,6 +4,8 @@ package io.github.chenfd99.jpaqueryobject.base;
  * 查询类型
  */
 public enum QType {
+    IS_NULL,
+    NOT_NULL,
 
     /**
      * 相等
@@ -41,7 +43,7 @@ public enum QType {
     /**
      * 模糊查询 ('%xx%)
      */
-    LIKE_ANYWHERE,
+    LIKE,
     /**
      * 模糊查询 ('%xx)
      */
@@ -60,6 +62,8 @@ public enum QType {
      */
     IN,
 
+    NOT_IN,
+
     /**
      * 大于(Comparable)
      */
@@ -67,7 +71,7 @@ public enum QType {
     /**
      * 大于等于(Comparable)
      */
-    GREATER_THAN_OR_EQUAL_TO,
+    GREATER_THAN_OR_EQUAL,
     /**
      * 小于(Comparable)
      */
@@ -75,5 +79,5 @@ public enum QType {
     /**
      * 小于等于(Comparable)
      */
-    LESS_THAN_OR_EQUAL_TO,
+    LESS_THAN_OR_EQUAL,
 }

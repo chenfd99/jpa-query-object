@@ -1,7 +1,6 @@
 package io.github.chenfd99.jpaqueryobject.annotation;
 
 
-
 import io.github.chenfd99.jpaqueryobject.base.QType;
 
 import java.lang.annotation.*;
