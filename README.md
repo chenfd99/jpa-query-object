@@ -2,6 +2,16 @@
 
 实现原理,通过继承`Specification`,并使用注解标明要查询的字段,最后实现`toPredicate`方法. 简化Specification代码编写量.
 
+
+```xml
+
+<dependency>
+    <groupId>io.github.chenfd99</groupId>
+    <artifactId>jpa-query-object</artifactId>
+    <version>0.9.1</version>
+</dependency>
+```
+
 ### 代码
 
 ```java
