@@ -5,12 +5,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>io.github.chenfd99</groupId>
-        <artifactId>jpa-query-object-parent</artifactId>
-        <version>0.9.5</version>
-    </parent>
-
+    <version>0.9.7</version>
     <groupId>io.github.chenfd99</groupId>
     <artifactId>jpa-query-object</artifactId>
     <name>jpa-query-object</name>
