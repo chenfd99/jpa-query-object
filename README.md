@@ -2,6 +2,11 @@
 
 实现原理,通过继承`Specification`,并使用注解标明要查询的字段,最后实现`toPredicate`方法. 简化Specification代码编写量.
 
+### 适用版本
+
+该分支只能在springboot3.0以下使用
+
+### 引用
 
 ```xml
 
@@ -46,7 +51,7 @@ public class UserSearch extends QueryObject<User> {
     @QFiled(name = "email", value = QType.LIKE)
     private String username;
 
-    @QFiled(name = "created_time", value = QType.LESS_THAN_OR_EQUAL)
+    @QFiled(name = "createdTime", value = QType.LESS_THAN_OR_EQUAL)
     private LocalDateTime createdTime;
 }
 ```
