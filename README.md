@@ -8,7 +8,7 @@
 <dependency>
     <groupId>io.github.chenfd99</groupId>
     <artifactId>jpa-query-object</artifactId>
-    <version>0.9.1</version>
+    <version>0.9.2</version>
 </dependency>
 ```
 
@@ -42,11 +42,11 @@ public interface UserRepository extends JpaSpecificationExecutor<User> {
 @Data
 public class UserSearch extends QueryObject<User> {
 
-    @QFiled(name = User_.USERNAME, value = QType.EQUAL)
-    @QFiled(name = User_.EMAIL, value = QType.LIKE)
+    @QFiled(name = "username", value = QType.EQUAL)
+    @QFiled(name = "email", value = QType.LIKE)
     private String username;
 
-    @QFiled(name = User_.CREATED_TIME, value = QType.LESS_THAN_OR_EQUAL)
+    @QFiled(name = "created_time", value = QType.LESS_THAN_OR_EQUAL)
     private LocalDateTime createdTime;
 }
 ```
