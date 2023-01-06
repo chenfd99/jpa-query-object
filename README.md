@@ -9,7 +9,7 @@
 <dependency>
     <groupId>io.github.chenfd99</groupId>
     <artifactId>jpa-query-object</artifactId>
-    <version>0.9.1</version>
+    <version>0.9.2</version>
 </dependency>
 ```
 
@@ -22,7 +22,7 @@
 <dependency>
     <groupId>io.github.chenfd99</groupId>
     <artifactId>jpa-query-object</artifactId>
-    <version>0.9.7</version>
+    <version>0.9.8</version>
 </dependency>
 ```
 
