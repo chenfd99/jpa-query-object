@@ -28,4 +28,10 @@ class UserDaoTest {
         userDao.findAll(qo);
     }
 
+
+    @Test
+    void testNoRestriction() {
+        userDao.findAll(new UserQO());
+    }
+
 }
