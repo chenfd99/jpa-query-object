@@ -72,8 +72,12 @@ public abstract class QueryObject<T> implements Specification<T> {
                 .collect(Collectors.toList());
     }
 
+
+    /**
+     * 创建查询条件
+     */
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private Predicate createPredicate(Root<T> root, CriteriaBuilder cb, Field field, QFiled qf) {
+    protected Predicate createPredicate(Root<T> root, CriteriaBuilder cb, Field field, QFiled qf) {
         String column = qf.name();
         if (column == null || column.equals("")) column = field.getName();
 
@@ -89,7 +93,11 @@ public abstract class QueryObject<T> implements Specification<T> {
                 return null;
             }
 
-            Path path = root.get(column);
+            //是否是连接查询条件
+            Join join = qf.joinName() != null && qf.joinName().length() > 0 && qf.joinType() != null
+                    ? root.join(qf.joinName(), qf.joinType()) : null;
+
+            Path path = join != null ? join.get(column) : root.get(column);
             switch (qf.value()) {
                 case EQUAL:
                     return cb.equal(path, value);
@@ -104,12 +112,16 @@ public abstract class QueryObject<T> implements Specification<T> {
                 case LIKE_END:
                     return cb.like(path, value + "%");
                 case GT:
+                    assert value instanceof Number;
                     return cb.gt(path, (Number) value);
                 case LT:
+                    assert value instanceof Number;
                     return cb.lt(path, (Number) value);
                 case GE:
+                    assert value instanceof Number;
                     return cb.ge(path, (Number) value);
                 case LE:
+                    assert value instanceof Number;
                     return cb.le(path, (Number) value);
                 case NOT_EQUAL:
                     return cb.notEqual(path, value);

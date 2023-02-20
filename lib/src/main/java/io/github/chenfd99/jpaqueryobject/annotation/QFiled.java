@@ -2,6 +2,7 @@ package io.github.chenfd99.jpaqueryobject.annotation;
 
 
 import io.github.chenfd99.jpaqueryobject.base.QType;
+import jakarta.persistence.criteria.JoinType;
 
 import java.lang.annotation.*;
 
@@ -29,6 +30,17 @@ public @interface QFiled {
      * 默认为相等查询
      */
     QType value() default QType.EQUAL;
+
+
+    /**
+     * 连表查询对应的Entity属性名称
+     */
+    String joinName() default "";
+
+    /**
+     * 连表查询类型
+     */
+    JoinType joinType() default JoinType.INNER;
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.FIELD, ElementType.METHOD})
