@@ -9,7 +9,7 @@
     <artifactId>jpa-query-object-parent</artifactId>
     <name>jpa-query-object-parent</name>
     <packaging>pom</packaging>
-    <version>0.9.8</version>
+    <version>0.9.9</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
