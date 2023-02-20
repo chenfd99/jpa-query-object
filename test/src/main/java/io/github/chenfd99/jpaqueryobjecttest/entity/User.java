@@ -1,13 +1,12 @@
 package io.github.chenfd99.jpaqueryobjecttest.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author ChenFD
@@ -25,4 +24,9 @@ public class User implements Serializable {
 
     @CreatedDate
     private LocalDateTime createdTime;
+
+
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "memberId")
+    private List<Order> orders;
 }
