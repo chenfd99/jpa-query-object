@@ -1,6 +1,7 @@
 package io.github.chenfd99.jpaqueryobjecttest.qo;
 
 import io.github.chenfd99.jpaqueryobject.annotation.QFiled;
+import io.github.chenfd99.jpaqueryobject.annotation.QGroup;
 import io.github.chenfd99.jpaqueryobject.base.QType;
 import io.github.chenfd99.jpaqueryobject.base.QueryObject;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User;
@@ -22,6 +23,12 @@ public class UserQO extends QueryObject<User> {
      */
     @QFiled(name = "name", value = QType.EQUAL)
     private String username;
+
+    /**
+     * 用户名模糊查询
+     */
+    @QFiled(name = "name", value = QType.LIKE)
+    private String usernameLike;
 
     /**
      * 创建时间小于
@@ -51,5 +58,15 @@ public class UserQO extends QueryObject<User> {
     @QFiled(joinName = "orders", name = "orderNo")
     @QFiled(name = "name")
     private String orderNoOrUsername;
+
+
+    /**
+     * 使用 group and 条件
+     */
+    @QGroup(
+            value = {@QFiled(name = "name"), @QFiled(name = "email")},
+            type = QGroup.Type.AND
+    )
+    private String groupAnd;
 
 }

@@ -18,7 +18,12 @@ public abstract class QueryObject<T> implements Specification<T> {
 
     @Override
     public Predicate toPredicate(Root<T> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
-        List<Predicate> predicates = toSpecWithLogicType(root, criteriaBuilder);
+        List<Predicate> predicates = null;
+        try {
+            predicates = toSpecWithLogicType(root, criteriaBuilder);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
         return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
     }
 
@@ -37,10 +42,15 @@ public abstract class QueryObject<T> implements Specification<T> {
     }
 
 
-    protected List<Predicate> toSpecWithLogicType(Root<T> root, CriteriaBuilder cb) {
+    protected List<Predicate> toSpecWithLogicType(Root<T> root, CriteriaBuilder cb) throws IllegalAccessException {
         List<Field> fields = getAllFields();
         List<Predicate> predicates = new ArrayList<>();
         for (Field field : fields) {
+            field.setAccessible(true);
+            if (field.get(this) == null) {
+                continue;
+            }
+
             QFiled qf = field.getAnnotation(QFiled.class);
             QGroup qg = field.getAnnotation(QGroup.class);
             if (qf == null && qg == null) {
@@ -75,14 +85,15 @@ public abstract class QueryObject<T> implements Specification<T> {
 
 
     /**
-     * 创建查询条件
+     * 生成查询条件
+     *
+     * @param field 字段
+     * @param qf    字段注解
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
     protected Predicate createPredicate(Root<T> root, CriteriaBuilder cb, Field field, QFiled qf) {
         String column = qf.name();
         if (column == null || column.equals("")) column = field.getName();
-
-        field.setAccessible(true);
 
         try {
             Object value = field.get(this);

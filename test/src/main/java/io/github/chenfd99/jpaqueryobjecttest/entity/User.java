@@ -26,6 +26,11 @@ public class User implements Serializable {
     private LocalDateTime createdTime;
 
 
+    /**
+     * 订单
+     * 一对多关系
+     * 当qo中使用连表查询时,也会使用到这个字段
+     */
     @OneToMany(fetch = FetchType.LAZY)
     @JoinColumn(name = "memberId")
     private List<Order> orders;

@@ -12,7 +12,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
-import java.time.LocalDateTime;
 
 /**
  * @author ChenFD
@@ -28,8 +27,20 @@ class UserDaoTest {
     void testQuery() {
         UserQO qo = new UserQO();
         qo.setUsername("chen");
-        qo.setKeyword("chen11");
-        qo.setCreatedTimeLE(LocalDateTime.now());
+        userDao.findAll(qo);
+    }
+
+    @Test
+    void testLikeQuery() {
+        UserQO qo = new UserQO();
+        qo.setUsernameLike("chen");
+        userDao.findAll(qo);
+    }
+
+    @Test
+    void testGroupOr() {
+        UserQO qo = new UserQO();
+        qo.setKeyword("chen");
         userDao.findAll(qo);
     }
 
@@ -37,7 +48,7 @@ class UserDaoTest {
     @Test
     void testJoinQuery() {
         UserQO qo = new UserQO();
-        qo.setOrderNo("222222");
+        qo.setOrderNo("20231212xxxxxxxx");
         userDao.findAll(qo);
     }
 
@@ -45,6 +56,14 @@ class UserDaoTest {
     void testJoinQueryOr() {
         UserQO qo = new UserQO();
         qo.setOrderNoOrUsername("222222");
+        userDao.findAll(qo);
+    }
+
+
+    @Test
+    void testGroupAnd() {
+        UserQO qo = new UserQO();
+        qo.setGroupAnd("chen");
         userDao.findAll(qo);
     }
 

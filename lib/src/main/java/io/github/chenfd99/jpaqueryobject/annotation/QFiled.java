@@ -19,7 +19,7 @@ import java.lang.annotation.*;
 public @interface QFiled {
 
     /**
-     * 实体对应的字段名称
+     * 数据库实体对应的字段名称
      * 默认为被注解的字段名称
      */
     String name() default "";
@@ -33,7 +33,7 @@ public @interface QFiled {
 
 
     /**
-     * 连表查询对应的Entity属性名称
+     * 连表查询对应的关系字段名称
      */
     String joinName() default "";
 
