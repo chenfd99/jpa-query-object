@@ -4,7 +4,14 @@ package io.github.chenfd99.jpaqueryobject.base;
  * 查询类型
  */
 public enum QType {
+    /**
+     * 查询条件不为null时 判断数据为null
+     */
     IS_NULL,
+
+    /**
+     * 查询条件不为null时 判断数据 not null
+     */
     NOT_NULL,
 
     /**
@@ -62,6 +69,9 @@ public enum QType {
      */
     IN,
 
+    /**
+     * not in 查询
+     */
     NOT_IN,
 
     /**

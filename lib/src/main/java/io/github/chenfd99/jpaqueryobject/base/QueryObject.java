@@ -1,9 +1,10 @@
 package io.github.chenfd99.jpaqueryobject.base;
 
 import io.github.chenfd99.jpaqueryobject.annotation.QFiled;
-import jakarta.persistence.criteria.*;
+import io.github.chenfd99.jpaqueryobject.annotation.QGroup;
 import org.springframework.data.jpa.domain.Specification;
 
+import javax.persistence.criteria.*;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,7 +42,7 @@ public abstract class QueryObject<T> implements Specification<T> {
         List<Predicate> predicates = new ArrayList<>();
         for (Field field : fields) {
             QFiled qf = field.getAnnotation(QFiled.class);
-            QFiled.QGroup qg = field.getAnnotation(QFiled.QGroup.class);
+            QGroup qg = field.getAnnotation(QGroup.class);
             if (qf == null && qg == null) {
                 continue;
             }
@@ -59,9 +60,9 @@ public abstract class QueryObject<T> implements Specification<T> {
                 if (groupPredicates.isEmpty()) {
                     continue;
                 }
-                if (qg.type() == QFiled.QGroup.Type.OR) {
+                if (qg.type() == QGroup.Type.OR) {
                     predicates.add(cb.or(groupPredicates.toArray(new Predicate[0])));
-                } else if (qg.type() == QFiled.QGroup.Type.AND) {
+                } else if (qg.type() == QGroup.Type.AND) {
                     predicates.addAll(groupPredicates);
                 }
             }

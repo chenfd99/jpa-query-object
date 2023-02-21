@@ -2,8 +2,8 @@ package io.github.chenfd99.jpaqueryobject.annotation;
 
 
 import io.github.chenfd99.jpaqueryobject.base.QType;
-import jakarta.persistence.criteria.JoinType;
 
+import javax.persistence.criteria.JoinType;
 import java.lang.annotation.*;
 
 
@@ -15,7 +15,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})
 @Documented
-@Repeatable(QFiled.QGroup.class)
+@Repeatable(QGroup.class)
 public @interface QFiled {
 
     /**
@@ -41,19 +41,6 @@ public @interface QFiled {
      * 连表查询类型
      */
     JoinType joinType() default JoinType.INNER;
-
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target({ElementType.FIELD, ElementType.METHOD})
-    @Documented
-    @interface QGroup {
-        QFiled[] value() default {};
-
-        QGroup.Type type() default QGroup.Type.OR;
-
-        enum Type {
-            AND, OR
-        }
-    }
 
 }
 

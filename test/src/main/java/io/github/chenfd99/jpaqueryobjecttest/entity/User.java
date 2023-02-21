@@ -1,9 +1,9 @@
 package io.github.chenfd99.jpaqueryobjecttest.entity;
 
-import jakarta.persistence.*;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
 
+import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
