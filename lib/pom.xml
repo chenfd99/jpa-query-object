@@ -120,8 +120,8 @@
             </plugin>
             <plugin>
                 <groupId>org.eclipse.transformer</groupId>
-                <artifactId>org.eclipse.transformer.maven</artifactId>
-                <version>0.2.0</version>
+                <artifactId>transformer-maven-plugin</artifactId>
+                <version>0.5.0</version>
                 <executions>
                     <execution>
                         <id>jakarta-ee</id>
@@ -131,6 +131,34 @@
                         <phase>package</phase>
                         <configuration>
                             <classifier>jakarta</classifier>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>javadoc-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <artifact>
+                                <groupId>io.smallrye.common</groupId>
+                                <artifactId>smallrye-common-annotation</artifactId>
+                                <version>1.11.0</version>
+                                <classifier>javadoc</classifier>
+                            </artifact>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>source-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <artifact>
+                                <groupId>io.smallrye.common</groupId>
+                                <artifactId>smallrye-common-annotation</artifactId>
+                                <version>1.11.0</version>
+                                <classifier>sources</classifier>
+                            </artifact>
                         </configuration>
                     </execution>
                 </executions>
