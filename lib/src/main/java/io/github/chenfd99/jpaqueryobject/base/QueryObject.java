@@ -93,7 +93,9 @@ public abstract class QueryObject<T> implements Specification<T> {
     @SuppressWarnings({"rawtypes", "unchecked"})
     protected Predicate createPredicate(Root<T> root, CriteriaBuilder cb, Field field, QFiled qf) {
         String column = qf.name();
-        if (column == null || column.equals("")) column = field.getName();
+        if (column == null || column.isEmpty()) {
+            column = field.getName();
+        }
 
         try {
             Object value = field.get(this);
@@ -106,7 +108,7 @@ public abstract class QueryObject<T> implements Specification<T> {
             }
 
             //是否是连接查询条件
-            Join join = qf.joinName() != null && qf.joinName().length() > 0 && qf.joinType() != null
+            Join join = qf.joinName() != null && !qf.joinName().isEmpty() && qf.joinType() != null
                     ? root.join(qf.joinName(), qf.joinType()) : null;
 
             Path path = join != null ? join.get(column) : root.get(column);
@@ -153,14 +155,16 @@ public abstract class QueryObject<T> implements Specification<T> {
                     if (value instanceof Object[] && ((Object[]) value).length != 0) {
                         CriteriaBuilder.In in = cb.in(path);
                         Arrays.stream(((Object[]) value)).forEach(in::value);
-                        return qf.value() == QType.IN ? cb.in(path) : cb.not(cb.in(path));
+                        return qf.value() == QType.IN ? in : cb.not(in);
                     }
 
-                    if (value instanceof Collection && ((Collection) value).size() != 0) {
+                    if (value instanceof Collection && !((Collection) value).isEmpty()) {
                         CriteriaBuilder.In in = cb.in(path);
                         ((Collection) value).forEach(in::value);
-                        return qf.value() == QType.IN ? cb.in(path) : cb.not(cb.in(path));
+                        return qf.value() == QType.IN ? in : cb.not(in);
                     }
+
+                    return null;
                 }
 
                 case IS_NULL:
