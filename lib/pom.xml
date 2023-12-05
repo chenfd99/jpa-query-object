@@ -4,9 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.chenfd99</groupId>
+        <artifactId>jpa-query-object-parent</artifactId>
+        <version>0.9.10-SNAPSHOT</version>
+    </parent>
 
-    <version>0.9.9-SNAPSHOT</version>
-    <groupId>io.github.chenfd99</groupId>
     <artifactId>jpa-query-object</artifactId>
     <name>jpa-query-object</name>
     <description>jpa Specification query object</description>
@@ -25,7 +28,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
             <optional>true</optional>
-            <version>2.7.8</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
