@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 /**
  * 用户查询条件
@@ -18,6 +19,9 @@ import java.time.LocalDateTime;
 @Setter
 @Getter
 public class UserQO extends QueryObject<User> {
+
+    @QFiled(value = QType.IN, name = "id")
+    private Set<Long> idIn;
     /**
      * 用户名
      */

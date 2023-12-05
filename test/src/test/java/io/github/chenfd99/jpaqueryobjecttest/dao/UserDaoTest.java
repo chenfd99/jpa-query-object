@@ -12,6 +12,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author ChenFD
@@ -67,6 +69,25 @@ class UserDaoTest {
         userDao.findAll(qo);
     }
 
+
+    @Test
+    void testIn() {
+        userDao.save(new User());
+        userDao.save(new User());
+        userDao.save(new User());
+
+        userDao.findAll().forEach(System.out::println);
+        System.out.println();
+
+        UserQO qo = new UserQO();
+        qo.setIdIn(Set.of(1L, 2L, 7898767L));
+        List<User> users = userDao.findAll(qo);
+        users.forEach(System.out::println);
+        System.out.println("k");
+
+        userDao.findAll().forEach(System.out::println);
+
+    }
 
     @Test
     void testNoRestriction() {

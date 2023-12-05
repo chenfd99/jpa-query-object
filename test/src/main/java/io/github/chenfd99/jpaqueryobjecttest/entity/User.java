@@ -16,6 +16,7 @@ import java.util.List;
 @Table(name = "t_user")
 public class User implements Serializable {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
