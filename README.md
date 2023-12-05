@@ -19,7 +19,7 @@
 <dependency>
     <groupId>io.github.chenfd99</groupId>
     <artifactId>jpa-query-object</artifactId>
-    <version>0.9.9</version>
+    <version>0.9.10</version>
     <!--    <classifier>jakarta</classifier>-->
 </dependency>
 ```
