@@ -5,11 +5,11 @@ import io.github.chenfd99.jpaqueryobject.annotation.QGroup;
 import io.github.chenfd99.jpaqueryobject.base.QType;
 import io.github.chenfd99.jpaqueryobject.base.QueryObject;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+import javax.persistence.criteria.JoinType;
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.Collection;
 
 /**
  * 用户查询条件
@@ -18,10 +18,18 @@ import java.util.Set;
  */
 @Setter
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserQO extends QueryObject<User> {
 
     @QFiled(value = QType.IN, name = "id")
-    private Set<Long> idIn;
+    private Collection<Long> idIn;
+
+    @QFiled(value = QType.NOT_IN, name = "id")
+    private Collection<Long> idNotIn;
+
+
     /**
      * 用户名
      */
@@ -46,7 +54,19 @@ public class UserQO extends QueryObject<User> {
      */
     @QFiled(name = "name", value = QType.EQUAL)
     @QFiled(name = "email", value = QType.LIKE)
-    private String keyword;
+    private String nameEqualOrEmailLike;
+
+    /**
+     * 用户名和邮箱
+     */
+    @QGroup(
+            value = {
+                    @QFiled(name = "name", value = QType.EQUAL),
+                    @QFiled(name = "email", value = QType.EQUAL)
+            },
+            type = QGroup.Type.AND
+    )
+    private String nameEqualAndEmailEqual;
 
 
     /**
@@ -59,7 +79,7 @@ public class UserQO extends QueryObject<User> {
     /**
      * 订单号或者用户名称
      */
-    @QFiled(joinName = "orders", name = "orderNo")
+    @QFiled(joinName = "orders", name = "orderNo", joinType = JoinType.LEFT)
     @QFiled(name = "name")
     private String orderNoOrUsername;
 

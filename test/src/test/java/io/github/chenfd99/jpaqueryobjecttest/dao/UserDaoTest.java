@@ -3,119 +3,246 @@ package io.github.chenfd99.jpaqueryobjecttest.dao;
 import io.github.chenfd99.jpaqueryobjecttest.entity.Order;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User;
 import io.github.chenfd99.jpaqueryobjecttest.qo.UserQO;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.JoinType;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
+import static org.apache.commons.lang3.RandomStringUtils.randomNumeric;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author ChenFD
  */
-@ExtendWith(SpringExtension.class)
 @DataJpaTest(properties = "spring.jpa.properties.hibernate.format_sql=true")
 class UserDaoTest {
     @Autowired
     private UserDao userDao;
+    @Autowired
+    private OrderDao orderDao;
 
 
     @Test
     void testQuery() {
-        UserQO qo = new UserQO();
-        qo.setUsername("chen");
-        userDao.findAll(qo);
+        User user = userDao.save(User.builder().name(randomAlphabetic(20)).build());
+
+        List<User> resultList = userDao.findAll(UserQO.builder().username(user.getName()).build());
+        resultList.forEach(System.out::println);
+
+        assertEquals(resultList.size(), 1);
+        assertEquals(user.getId(), resultList.get(0).getId());
     }
 
     @Test
+    @DisplayName("模糊查询")
     void testLikeQuery() {
-        UserQO qo = new UserQO();
-        qo.setUsernameLike("chen");
-        userDao.findAll(qo);
+        String nameLike = randomAlphabetic(20);
+        List<User> userList = Stream.generate(() ->
+                        userDao.save(User.builder().name(nameLike + randomAlphabetic(6)).build())
+                )
+                .limit(10).toList();
+        userList.forEach(System.out::println);
+
+        System.out.println("查询后的数据");
+        List<User> resultList = userDao.findAll(UserQO.builder().usernameLike(nameLike).build());
+        assertEquals(resultList.size(), userList.size());
+
+        List<Long> idList = userList.stream().map(User::getId).toList();
+        for (User user : resultList) {
+            System.out.println(user);
+            assertTrue(idList.contains(user.getId()));
+        }
+
     }
 
     @Test
+    @DisplayName("用用一个关键词查询多个条件使用or连接")
     void testGroupOr() {
-        UserQO qo = new UserQO();
-        qo.setKeyword("chen");
-        userDao.findAll(qo);
+        String nameEqualOrEmailLike = randomAlphabetic(20);
+        List<User> userList = Stream.generate(() -> {
+                            User user = User.builder()
+                                    .name(nameEqualOrEmailLike)
+                                    .build();
+                            return userDao.save(user);
+                        }
+                )
+                .limit(6).toList();
+        List<User> userList2 = Stream.generate(() -> {
+                            User user = User.builder()
+                                    .email(nameEqualOrEmailLike + randomAlphabetic(6))
+                                    .build();
+                            return userDao.save(user);
+                        }
+                )
+                .limit(7).toList();
+
+
+        System.out.println("查询后的数据");
+        UserQO qo = UserQO.builder().nameEqualOrEmailLike(nameEqualOrEmailLike).build();
+        List<User> resultList = userDao.findAll(qo);
+        resultList.forEach(System.out::println);
+
+        assertEquals(resultList.size(), userList.size() + userList2.size());
+        qo.setNameEqualOrEmailLike(nameEqualOrEmailLike);
     }
 
 
     @Test
+    @Transactional
+    @DisplayName("连表查询")
     void testJoinQuery() {
-        UserQO qo = new UserQO();
-        qo.setOrderNo("20231212xxxxxxxx");
-        userDao.findAll(qo);
-    }
+        User user = User.builder()
+                .name(randomAlphabetic(11))
+                .build();
+        userDao.save(user);
 
-    @Test
-    void testJoinQueryOr() {
-        UserQO qo = new UserQO();
-        qo.setOrderNoOrUsername("222222");
-        userDao.findAll(qo);
-    }
+        Order order = Order.builder()
+                .userId(user.getId())
+                .orderNo("2033_" + randomNumeric(11))
+                .build();
+        orderDao.save(order);
 
-
-    @Test
-    void testGroupAnd() {
-        UserQO qo = new UserQO();
-        qo.setGroupAnd("chen");
-        userDao.findAll(qo);
-    }
-
-
-    @Test
-    void testIn() {
-        userDao.save(new User());
-        userDao.save(new User());
-        userDao.save(new User());
-
+        System.out.println("user:");
         userDao.findAll().forEach(System.out::println);
-        System.out.println();
 
-        UserQO qo = new UserQO();
-        qo.setIdIn(Set.of(1L, 2L, 7898767L));
+        System.out.println("order:");
+        orderDao.findAll().forEach(System.out::println);
+
+        System.out.println("result:");
+        UserQO qo = UserQO.builder().orderNo(order.getOrderNo()).build();
         List<User> users = userDao.findAll(qo);
         users.forEach(System.out::println);
-        System.out.println("k");
 
-        userDao.findAll().forEach(System.out::println);
-
+        assertEquals(1, users.size());
+        assertEquals(users.get(0).getId(), user.getId());
     }
 
     @Test
+    @DisplayName("订单连表和名称相等查询")
+    void testJoinOrEqualQuery() {
+        var orderNoOrUsername = randomAlphabetic(20);
+        User user = User.builder()
+                .name(randomAlphabetic(11))
+                .build();
+        userDao.save(user);
+        Order order = Order.builder()
+                .userId(user.getId())
+                .orderNo(orderNoOrUsername)
+                .build();
+        orderDao.save(order);
+
+        List<User> userList = Stream.concat(Stream.generate(() -> userDao.save(new User(orderNoOrUsername))).limit(4), Stream.of(user))
+                .toList();
+
+        System.out.println("user:");
+        userDao.findAll().forEach(System.out::println);
+
+        System.out.println("order:");
+        orderDao.findAll().forEach(System.out::println);
+
+        System.out.println("result:");
+        UserQO qo = UserQO.builder().orderNoOrUsername(order.getOrderNo()).build();
+        List<User> users = userDao.findAll(qo);
+        users.forEach(System.out::println);
+
+        assertEquals(userList.size(), users.size());
+        userList.forEach(u -> assertTrue(users.stream().map(User::getId).toList().contains(u.getId())));
+    }
+
+
+    @Test
+    @DisplayName("用用一个关键词查询多个条件使用and连接")
+    void testGroupAnd() {
+        String keyword = randomAlphabetic(20);
+        User user = User.builder().name(keyword).email(keyword).build();
+        userDao.save(user);
+
+        //干扰数据
+        List<User> list1 = Stream.generate(() -> userDao.save(User.builder().name(keyword).build())).limit(6).toList();
+        List<User> list = Stream.generate(() -> userDao.save(User.builder().email(keyword).build())).limit(6).toList();
+
+
+        System.out.println("查询后的数据");
+        UserQO qo = UserQO.builder().nameEqualAndEmailEqual(keyword).build();
+        List<User> resultList = userDao.findAll(qo);
+        resultList.forEach(System.out::println);
+
+        assertEquals(resultList.size(), 1);
+        assertEquals(resultList.get(0).getId(), user.getId());
+    }
+
+
+    @Test
+    @DisplayName("In 查询")
+    void testIn() {
+        System.out.println("准备的数据");
+        List<User> userList = Stream.generate(() ->
+                        userDao.save(new User(randomAlphabetic(6)))
+                )
+                .limit(10).collect(Collectors.toList());
+        userDao.findAll().forEach(System.out::println);
+
+        Collections.shuffle(userList);
+        List<Long> idList = userList.stream()
+                .map(User::getId).limit(8)
+                .toList();
+
+        System.out.println("查询的 In 的id列表:");
+        String idsStr = idList.stream().map(Object::toString).collect(Collectors.joining(",\t"));
+        System.out.println(idsStr);
+
+        System.out.println("查找后的数据");
+        List<User> users = userDao.findAll(UserQO.builder().idIn(idList).build());
+        for (User user : users) {
+            System.out.println(user);
+            assertTrue(idList.contains(user.getId()));
+        }
+
+        assertEquals(idList.size(), users.size());
+    }
+
+    @Test
+    @DisplayName("NotIn 查询")
+    void testNotIn() {
+        System.out.println("准备的数据");
+        List<User> userList = Stream.generate(() ->
+                        userDao.save(new User(randomAlphabetic(6)))
+                )
+                .limit(10).collect(Collectors.toList());
+        List<User> totalUserList = userDao.findAll();
+        totalUserList.forEach(System.out::println);
+        System.out.println();
+
+        Collections.shuffle(userList);
+        List<Long> idList = userList.stream()
+                .map(User::getId).skip(4)
+                .toList();
+
+        System.out.println("查询的 notIn 的id列表:");
+        String idsStr = idList.stream().map(Object::toString).collect(Collectors.joining(",\t"));
+        System.out.println(idsStr);
+
+        System.out.println("查找后的数据");
+        List<User> users = userDao.findAll(UserQO.builder().idNotIn(idList).build());
+        for (User user : users) {
+            System.out.println(user);
+            assertFalse(idList.contains(user.getId()));
+        }
+
+        assertEquals(totalUserList.size() - idList.size(), users.size());
+    }
+
+    @Test
+    @DisplayName("无条件查询")
     void testNoRestriction() {
         userDao.findAll(new UserQO());
     }
 
-
-    @Test
-    void testSpecification() {
-        /*
-           select
-                  u1_0.id,
-                  u1_0.created_time,
-                  u1_0.email,
-                  u1_0.name
-              from
-                  t_user u1_0
-              join
-                  t_order o1_0
-                      on u1_0.id=o1_0.member_id
-              where
-                  o1_0.order_no=?
-         */
-        Specification<User> specification = (root, query, cb) -> {
-            Join<User, Order> join = root.join("orders", JoinType.INNER);
-            return cb.and(cb.equal(join.get("orderNo"), "20231112"));
-        };
-
-        userDao.findAll(specification);
-    }
 }
