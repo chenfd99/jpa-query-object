@@ -10,6 +10,8 @@
     <name>jpa-query-object-parent</name>
     <packaging>pom</packaging>
     <version>0.9.11-SNAPSHOT</version>
+    <description>jpa query object parent</description>
+    <url>https://github.com/chenfd99/jpa-query-object</url>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -100,7 +102,7 @@
                 <artifactId>maven-gpg-plugin</artifactId>
                 <version>1.5</version>
                 <configuration>
-<!--                    <skip>true</skip>-->
+                    <!--                    <skip>true</skip>-->
                 </configuration>
                 <executions>
                     <execution>

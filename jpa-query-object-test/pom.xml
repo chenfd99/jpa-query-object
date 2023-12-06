@@ -11,7 +11,10 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
+    <name>jpa-query-object-test</name>
     <artifactId>jpa-query-object-test</artifactId>
+    <description>jpa query object test</description>
+    <url>https://github.com/chenfd99/jpa-query-object</url>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
