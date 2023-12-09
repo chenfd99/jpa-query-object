@@ -18,13 +18,20 @@ public abstract class QueryObject<T> implements Specification<T> {
 
     @Override
     public Predicate toPredicate(Root<T> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
-        List<Predicate> predicates = null;
         try {
-            predicates = toSpecWithLogicType(root, criteriaBuilder);
+            List<Predicate> predicates = toSpecWithLogicType(root, criteriaBuilder);
+            customPredicate(root, criteriaQuery, criteriaBuilder).ifPresent(predicates::add);
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-        return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+    }
+
+    /**
+     * 添加特定条件
+     */
+    public Optional<Predicate> customPredicate(Root<T> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
+        return Optional.empty();
     }
 
 
@@ -84,6 +91,16 @@ public abstract class QueryObject<T> implements Specification<T> {
     }
 
 
+    protected Join<?, ?> createJoinFetch(Root<T> root, CriteriaBuilder cb, Field field, QFiled qf) {
+        String joinName = qf.joinName();
+        if (joinName == null || joinName.trim().isEmpty() || qf.joinType() == null) {
+            return null;
+        }
+
+        return root.join(joinName, qf.joinType());
+    }
+
+
     /**
      * 生成查询条件
      *
@@ -108,8 +125,7 @@ public abstract class QueryObject<T> implements Specification<T> {
             }
 
             //是否是连接查询条件
-            Join join = qf.joinName() != null && !qf.joinName().isEmpty() && qf.joinType() != null
-                    ? root.join(qf.joinName(), qf.joinType()) : null;
+            Join join = createJoinFetch(root, cb, field, qf);
 
             Path path = join != null ? join.get(column) : root.get(column);
             switch (qf.value()) {
