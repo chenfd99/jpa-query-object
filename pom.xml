@@ -14,8 +14,7 @@
     <url>https://github.com/chenfd99/jpa-query-object</url>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-boot.version>2.7.18</spring-boot.version>
     </properties>
@@ -102,7 +101,7 @@
                 <artifactId>maven-gpg-plugin</artifactId>
                 <version>1.5</version>
                 <configuration>
-                    <!--                    <skip>true</skip>-->
+                    <skip>true</skip>
                 </configuration>
                 <executions>
                     <execution>
