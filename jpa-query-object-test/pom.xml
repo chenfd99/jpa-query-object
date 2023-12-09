@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.github.chenfd99</groupId>
         <artifactId>jpa-query-object-parent</artifactId>
-        <version>0.9.11-SNAPSHOT</version>
+        <version>0.9.12-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
