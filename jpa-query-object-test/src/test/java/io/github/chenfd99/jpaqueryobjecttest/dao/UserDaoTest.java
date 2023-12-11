@@ -3,6 +3,7 @@ package io.github.chenfd99.jpaqueryobjecttest.dao;
 import io.github.chenfd99.jpaqueryobjecttest.entity.Order;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User;
 import io.github.chenfd99.jpaqueryobjecttest.qo.UserQO;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,72 @@ class UserDaoTest {
     private UserDao userDao;
     @Autowired
     private OrderDao orderDao;
+
+    @Test
+    void IS_NULL() {
+        long count = userDao.count();
+        System.out.println("count = " + count);
+
+        long usersCount = Stream.generate(() -> userDao.save(new User())).limit(5).count();
+        long count1 = userDao.count(UserQO.builder().nameIsNull(true).build());
+
+        System.out.println("count1 = " + count1);
+        assertEquals(count1, count + usersCount);
+    }
+
+    @Test
+    void NOT_NULL() {
+        long count = userDao.count();
+        System.out.println("count = " + count);
+
+        String name = randomAlphabetic(22);
+        long usersCount = Stream.generate(() -> userDao.save(new User(name))).limit(5).count();
+        System.out.println("usersCount = " + usersCount);
+
+        long count1 = userDao.count(UserQO.builder().nameNotNull(true).build());
+        System.out.println("count1 = " + count1);
+        assertEquals(count1, count + usersCount);
+    }
+
+    @Test
+    void EQUAL_OR_NULL() {
+        long count = userDao.count();
+        System.out.println("count = " + count);
+
+        String name = randomAlphabetic(22);
+        long usersCount =
+                Stream.generate(() ->
+                                userDao.save(new User(RandomUtils.nextInt() % 2 == 0 ? name : null)))
+                        .limit(11)
+                        .count();
+        System.out.println("usersCount = " + usersCount);
+
+        long count1 = userDao.count(UserQO.builder().nameEqualOrNull(name).build());
+        System.out.println("count1 = " + count1);
+        assertEquals(count1, count + usersCount);
+    }
+
+    @Test
+    void NOT_EQUAL_OR_NULL() {
+        long count = userDao.count();
+        System.out.println("count = " + count);
+
+        String name = randomAlphabetic(22);
+        long nameCount =
+                Stream.generate(() -> userDao.save(new User(name)))
+                        .limit(5)
+                        .count();
+
+        long nameNullCount =
+                Stream.generate(() -> userDao.save(new User()))
+                        .limit(6)
+                        .count();
+        System.out.println("nameCount = " + nameCount);
+
+        long count1 = userDao.count(UserQO.builder().nameNotEqualOrNull(name).build());
+        System.out.println("count1 = " + count1);
+        assertEquals(count1, count + nameNullCount);
+    }
 
 
     @Test
@@ -237,6 +304,17 @@ class UserDaoTest {
         }
 
         assertEquals(totalUserList.size() - idList.size(), users.size());
+    }
+
+    @Test
+    @DisplayName("Not Equal")
+    void testNotEqual() {
+        long count = userDao.count();
+        String name = randomAlphabetic(22);
+        userDao.save(new User(name));
+        userDao.save(new User(name));
+        long count1 = userDao.count(UserQO.builder().nameNotEqual(name).build());
+        assertEquals(count1, count);
     }
 
     @Test

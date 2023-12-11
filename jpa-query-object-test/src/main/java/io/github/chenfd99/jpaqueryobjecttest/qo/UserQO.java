@@ -56,6 +56,22 @@ public class UserQO extends QueryObject<User> {
     @QFiled(name = "email", value = QType.LIKE)
     private String nameEqualOrEmailLike;
 
+    @QFiled(name = "name", value = QType.NOT_EQUAL)
+    private String nameNotEqual;
+
+
+    @QFiled(name = "name", value = QType.IS_NULL)
+    private Boolean nameIsNull;
+
+    @QFiled(name = "name", value = QType.NOT_NULL)
+    private Boolean nameNotNull;
+
+    @QFiled(name = "name", value = QType.EQUAL_OR_NULL)
+    private String nameEqualOrNull;
+
+    @QFiled(name = "name", value = QType.NOT_EQUAL_OR_NULL)
+    private String nameNotEqualOrNull;
+
     /**
      * 用户名和邮箱
      */
