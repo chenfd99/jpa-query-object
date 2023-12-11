@@ -128,7 +128,7 @@ public abstract class QueryObject<T> implements Specification<T> {
         //是否是连接查询条件
         Join join = createJoinFetch(root, cb, field, qf);
 
-        String column = ofNullable(qf.name()).orElse(field.getName());
+        String column = qf.name() == null || qf.name().isEmpty() ? field.getName() : qf.name();
         Path path = ofNullable((From) join).orElse(root).get(column);
         return getPredicateWithType(qf.value(), path, fieldValue, cb);
     }
