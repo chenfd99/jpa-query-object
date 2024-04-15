@@ -22,6 +22,11 @@ public abstract class QueryObject<T> implements Specification<T> {
     public Predicate toPredicate(Root<T> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
         List<Predicate> predicates = toSpecWithLogicType(root, criteriaBuilder);
         customPredicate(root, criteriaQuery, criteriaBuilder).ifPresent(predicates::add);
+
+        if (predicates.isEmpty()) {
+            return null;
+        }
+
         return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
     }
 
