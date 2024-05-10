@@ -17,11 +17,19 @@ import static java.util.Optional.ofNullable;
  */
 public abstract class QueryObject<T> implements Specification<T> {
 
+    /**
+     * 去重
+     */
+    public boolean distinct() {
+        return false;
+    }
 
     @Override
     public Predicate toPredicate(Root<T> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
         List<Predicate> predicates = toSpecWithLogicType(root, criteriaBuilder);
         customPredicate(root, criteriaQuery, criteriaBuilder).ifPresent(predicates::add);
+
+        criteriaQuery.distinct(distinct());
 
         if (predicates.isEmpty()) {
             return null;
