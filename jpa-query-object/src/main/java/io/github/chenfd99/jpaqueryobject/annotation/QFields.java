@@ -6,12 +6,12 @@ import java.lang.annotation.*;
  * QFiled分组条件
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Documented
-public @interface QGroup {
-    QFiled[] value() default {};
+public @interface QFields {
+    QField[] value();
 
-    QGroup.Type type() default QGroup.Type.OR;
+    Type type() default Type.OR;
 
     enum Type {
         AND, OR

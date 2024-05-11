@@ -13,10 +13,10 @@ import java.lang.annotation.*;
  * @author chenfd
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Documented
-@Repeatable(QGroup.class)
-public @interface QFiled {
+@Repeatable(QFields.class)
+public @interface QField {
 
     /**
      * 数据库实体对应的字段名称
@@ -42,6 +42,13 @@ public @interface QFiled {
      */
     JoinType joinType() default JoinType.INNER;
 
+    /**
+     * 是否强制join
+     * <p>
+     * force为true时会使root强制join，不管被注解的这个字段的值是否为null。
+     * force为false时，只有在被注解的这个字段的值不为null时去执行join
+     */
+    boolean forceJoin() default false;
 }
 
 

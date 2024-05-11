@@ -1,7 +1,7 @@
 package io.github.chenfd99.jpaqueryobject.base;
 
-import io.github.chenfd99.jpaqueryobject.annotation.QFiled;
-import io.github.chenfd99.jpaqueryobject.annotation.QGroup;
+import io.github.chenfd99.jpaqueryobject.annotation.QField;
+import io.github.chenfd99.jpaqueryobject.annotation.QFields;
 import org.springframework.data.jpa.domain.Specification;
 
 import javax.persistence.criteria.*;
@@ -65,31 +65,13 @@ public abstract class QueryObject<T> implements Specification<T> {
         List<Predicate> predicates = new ArrayList<>();
         for (Field field : fields) {
 
-            QFiled qf = field.getAnnotation(QFiled.class);
-            QGroup qg = field.getAnnotation(QGroup.class);
-            if (qf == null && qg == null) {
-                continue;
-            }
+            boolean fieldAccessible = field.isAccessible();
+            field.setAccessible(true);
 
-            if (qf != null) {
-                ofNullable(createPredicate(root, cq, cb, field, qf)).ifPresent(predicates::add);
-            }
+            handleJoinAnno(root, field);
+            handleQFieldAnno(root, cq, cb, field, predicates);
 
-            if (qg != null && qg.type() != null && qg.value() != null && qg.value().length != 0) {
-                List<Predicate> groupPredicates = Arrays.stream(qg.value())
-                        .map(qFiled -> createPredicate(root, cq, cb, field, qFiled))
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
-
-                if (groupPredicates.isEmpty()) {
-                    continue;
-                }
-                if (qg.type() == QGroup.Type.OR) {
-                    predicates.add(cb.or(groupPredicates.toArray(new Predicate[0])));
-                } else if (qg.type() == QGroup.Type.AND) {
-                    predicates.addAll(groupPredicates);
-                }
-            }
+            field.setAccessible(fieldAccessible);
         }
 
         return predicates.stream()
@@ -98,25 +80,88 @@ public abstract class QueryObject<T> implements Specification<T> {
     }
 
 
-    protected Join<?, ?> createJoinFetch(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field, QFiled qf) {
-        String joinName = qf.joinName();
-        if (joinName == null || joinName.trim().isEmpty() || qf.joinType() == null) {
-            return null;
+    protected void handleQFieldAnno(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field, List<Predicate> predicates) {
+        //字段值为空 不进行查询判断
+        if (getFieldValue(field) == null) {
+            return;
         }
 
-        return root.join(joinName, qf.joinType());
+        QField qf = field.getAnnotation(QField.class);
+        QFields qg = field.getAnnotation(QFields.class);
+        if (qf == null && qg == null) {
+            return;
+        }
+
+        if (qf != null) {
+            ofNullable(createPredicate(root, cq, cb, field, qf)).ifPresent(predicates::add);
+        }
+
+        if (qg == null || qg.type() == null) {
+            return;
+        }
+
+        List<Predicate> groupPredicates = Arrays.stream(qg.value())
+                .map(qFiled -> createPredicate(root, cq, cb, field, qFiled))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        if (groupPredicates.isEmpty()) {
+            return;
+        }
+
+        if (qg.type() == QFields.Type.OR) {
+            predicates.add(cb.or(groupPredicates.toArray(new Predicate[0])));
+        } else if (qg.type() == QFields.Type.AND) {
+            predicates.add(cb.and(groupPredicates.toArray(new Predicate[0])));
+        }
+    }
+
+    /**
+     * 处理Join注解
+     */
+    protected void handleJoinAnno(Root<T> root, Field qf) {
+        QField[] qFields = qf.getAnnotationsByType(QField.class);
+
+        for (QField qField : qFields) {
+            createJoin(root, qField, qf);
+        }
+    }
+
+    protected void createJoin(Root<T> root, QField qf, Field field) {
+        String joinName = qf.joinName();
+        if (joinName == null || joinName.trim().isEmpty() || qf.joinType() == null) {
+            return;
+        }
+
+        //不是强制join并且字段值为null
+        if (!qf.forceJoin() && getFieldValue(field) == null) {
+            return;
+        }
+
+        //已经 join 了
+        if (ofNullable(getJoin(root, joinName, qf.joinType())).isPresent()) {
+            return;
+        }
+
+        root.join(joinName, qf.joinType());
+    }
+
+    protected Join<T, ?> getJoin(Root<T> root, String joinName, JoinType joinType) {
+        if (joinName == null || joinName.trim().isEmpty() || joinType == null) {
+            return null;
+        }
+        return root.getJoins().stream()
+                .filter(tJoin -> tJoin.getAttribute().getName().equals(joinName))
+                .findFirst()
+                .orElse(null);
     }
 
 
     protected Object getFieldValue(Field field) {
-        boolean fieldAccessible = field.isAccessible();
         try {
-            field.setAccessible(true);
             return field.get(this);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
-        } finally {
-            field.setAccessible(fieldAccessible);
         }
     }
 
@@ -127,22 +172,17 @@ public abstract class QueryObject<T> implements Specification<T> {
      * @param qf    字段注解
      */
     @SuppressWarnings({"rawtypes"})
-    protected Predicate createPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field, QFiled qf) {
+    protected Predicate createPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field, QField qf) {
         Object fieldValue = getFieldValue(field);
-        if (fieldValue == null) {
-            return null;
-        }
 
         //不查询String空条件
         if (String.class.isAssignableFrom(fieldValue.getClass()) && ((String) fieldValue).trim().isEmpty()) {
             return null;
         }
 
-        //是否是连接查询条件
-        Join join = createJoinFetch(root, cq, cb, field, qf);
 
         String column = qf.name() == null || qf.name().isEmpty() ? field.getName() : qf.name();
-        Path path = ofNullable((From) join).orElse(root).get(column);
+        Path path = ofNullable((From) getJoin(root, qf.joinName(), qf.joinType())).orElse(root).get(column);
         return getPredicateWithType(qf.value(), path, fieldValue, cb);
     }
 

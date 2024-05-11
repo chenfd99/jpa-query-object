@@ -1,9 +1,6 @@
 package io.github.chenfd99.jpaqueryobjecttest.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -35,6 +32,12 @@ public class User implements Serializable {
 
     @CreatedDate
     private LocalDateTime createdTime;
+
+
+    @OneToOne(fetch = FetchType.LAZY, mappedBy = "user")
+    @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
+    private Purse purse;
 
 
     /**
