@@ -1,6 +1,7 @@
 package io.github.chenfd99.jpaqueryobjecttest.qo;
 
 import io.github.chenfd99.jpaqueryobject.annotation.QField;
+import io.github.chenfd99.jpaqueryobject.annotation.QFields;
 import io.github.chenfd99.jpaqueryobject.base.QType;
 import io.github.chenfd99.jpaqueryobject.base.QueryObject;
 import io.github.chenfd99.jpaqueryobjecttest.entity.Purse_;
@@ -28,8 +29,8 @@ public class UserJoinQO extends QueryObject<User> {
      * 查询的时候强制join ORDERS 和 PURSE 两个表
      * 此字段其他仅作为声明强制join的作用
      */
-    @QField(joinName = User_.ORDERS, joinType = JoinType.LEFT, forceJoin = true)
-    @QField(joinName = User_.PURSE, joinType = JoinType.LEFT, forceJoin = true)
+    @QFields({@QField(joinName = User_.ORDERS, joinType = JoinType.LEFT, forceJoin = true),
+            @QField(joinName = User_.PURSE, joinType = JoinType.LEFT, forceJoin = true)})
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     private Long joinKeyword;
