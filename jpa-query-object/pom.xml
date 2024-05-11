@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.github.chenfd99</groupId>
         <artifactId>jpa-query-object-parent</artifactId>
-        <version>0.9.12-SNAPSHOT</version>
+        <version>0.10.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>jpa-query-object</artifactId>
