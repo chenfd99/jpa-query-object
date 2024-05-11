@@ -25,23 +25,23 @@ public abstract class QueryObject<T> implements Specification<T> {
     }
 
     @Override
-    public Predicate toPredicate(Root<T> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
-        List<Predicate> predicates = toSpecWithLogicType(root, criteriaBuilder);
-        customPredicate(root, criteriaQuery, criteriaBuilder).ifPresent(predicates::add);
+    public Predicate toPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
+        List<Predicate> predicates = toSpecWithLogicType(root, cq, cb);
+        customPredicate(root, cq, cb).ifPresent(predicates::add);
 
-        criteriaQuery.distinct(distinct());
+        cq.distinct(distinct());
 
         if (predicates.isEmpty()) {
             return null;
         }
 
-        return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        return cb.and(predicates.toArray(new Predicate[0]));
     }
 
     /**
      * 添加特定条件
      */
-    public Optional<Predicate> customPredicate(Root<T> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
+    public Optional<Predicate> customPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
         return Optional.empty();
     }
 
@@ -60,7 +60,7 @@ public abstract class QueryObject<T> implements Specification<T> {
     }
 
 
-    protected List<Predicate> toSpecWithLogicType(Root<T> root, CriteriaBuilder cb) {
+    protected List<Predicate> toSpecWithLogicType(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
         List<Field> fields = getAllFields();
         List<Predicate> predicates = new ArrayList<>();
         for (Field field : fields) {
@@ -72,12 +72,12 @@ public abstract class QueryObject<T> implements Specification<T> {
             }
 
             if (qf != null) {
-                ofNullable(createPredicate(root, cb, field, qf)).ifPresent(predicates::add);
+                ofNullable(createPredicate(root, cq, cb, field, qf)).ifPresent(predicates::add);
             }
 
             if (qg != null && qg.type() != null && qg.value() != null && qg.value().length != 0) {
                 List<Predicate> groupPredicates = Arrays.stream(qg.value())
-                        .map(qFiled -> createPredicate(root, cb, field, qFiled))
+                        .map(qFiled -> createPredicate(root, cq, cb, field, qFiled))
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList());
 
@@ -98,7 +98,7 @@ public abstract class QueryObject<T> implements Specification<T> {
     }
 
 
-    protected Join<?, ?> createJoinFetch(Root<T> root, CriteriaBuilder cb, Field field, QFiled qf) {
+    protected Join<?, ?> createJoinFetch(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field, QFiled qf) {
         String joinName = qf.joinName();
         if (joinName == null || joinName.trim().isEmpty() || qf.joinType() == null) {
             return null;
@@ -127,7 +127,7 @@ public abstract class QueryObject<T> implements Specification<T> {
      * @param qf    字段注解
      */
     @SuppressWarnings({"rawtypes"})
-    protected Predicate createPredicate(Root<T> root, CriteriaBuilder cb, Field field, QFiled qf) {
+    protected Predicate createPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field, QFiled qf) {
         Object fieldValue = getFieldValue(field);
         if (fieldValue == null) {
             return null;
@@ -139,7 +139,7 @@ public abstract class QueryObject<T> implements Specification<T> {
         }
 
         //是否是连接查询条件
-        Join join = createJoinFetch(root, cb, field, qf);
+        Join join = createJoinFetch(root, cq, cb, field, qf);
 
         String column = qf.name() == null || qf.name().isEmpty() ? field.getName() : qf.name();
         Path path = ofNullable((From) join).orElse(root).get(column);
