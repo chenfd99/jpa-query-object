@@ -1,3 +1,9 @@
+jpa-query-object
+=============================
+
+![Maven Central Version](https://img.shields.io/maven-central/v/io.github.chenfd99/jpa-query-object?label=Release)
+![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/io.github.chenfd99/jpa-query-object?server=https%3A%2F%2Fs01.oss.sonatype.org&label=Snapshot)
+
 # jpa动态查询实体
 
 用于动态接收jpa查询条件，实现原理，通过继承`Specification`
@@ -8,7 +14,33 @@
 ### 使用场景
 
 1. controller接收页面动态参数。
+
+```
+  /**
+     * 分页查询
+     *
+     * @param qo       查询条件
+     * @param pageable 分页参数
+     */
+    @GetMapping("/page")
+    public Page<User> page(UserJoinQO qo, Pageable pageable) {
+        return userService.page(qo, pageable);
+    }
+```
+
 2. service里编写动态查询条件的业务代码
+
+``` 
+    /**
+     * 查询全部用户数据
+     *
+     * @param qo   查询条件
+     * @param sort 排序
+     */
+    public <QO extends QueryObject<User>> List<User> list(QO qo, Sort sort) {
+        return userDao.findAll(qo, sort);
+    }
+```
 
 ## 依赖
 
@@ -19,7 +51,6 @@
 <dependency>
     <groupId>io.github.chenfd99</groupId>
     <artifactId>jpa-query-object</artifactId>
-    <version>0.9.11</version>
     <!--    <classifier>jakarta</classifier>-->
 </dependency>
 ```
