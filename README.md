@@ -15,31 +15,43 @@ jpa-query-object
 
 1. controller接收页面动态参数。
 
-```
-  /**
-     * 分页查询
-     *
-     * @param qo       查询条件
-     * @param pageable 分页参数
-     */
-    @GetMapping("/page")
-    public Page<User> page(UserJoinQO qo, Pageable pageable) {
-        return userService.page(qo, pageable);
-    }
+```java
+/**
+ * 分页查询
+ *
+ * @param qo       查询条件
+ * @param pageable 分页参数
+ */
+@GetMapping("/page")
+public Page<User> page(UserJoinQO qo, Pageable pageable) {
+    return userService.page(qo, pageable);
+}
+
+
+/**
+ * 查询全部用户数据
+ *
+ * @param qo   查询条件
+ * @param sort 排序
+ */
+@GetMapping("/list")
+public List<User> list(UserQO qo, Sort sort) {
+    return userService.list(qo, sort);
+}
 ```
 
 2. service里编写动态查询条件的业务代码
 
-``` 
-    /**
-     * 查询全部用户数据
-     *
-     * @param qo   查询条件
-     * @param sort 排序
-     */
-    public <QO extends QueryObject<User>> List<User> list(QO qo, Sort sort) {
-        return userDao.findAll(qo, sort);
-    }
+```java
+/**
+ * 查询全部用户数据
+ *
+ * @param qo   查询条件
+ * @param sort 排序
+ */
+public <QO extends QueryObject<User>> List<User> list(QO qo, Sort sort) {
+    return userDao.findAll(qo, sort);
+}
 ```
 
 ## 依赖
@@ -58,12 +70,12 @@ jpa-query-object
 ## 使用方法
 
 1. 用于查询的实体继承 `QueryObject`；
-2. 并在需要参与查询的字段上添加注解`@QFiled`；
+2. 并在需要参与查询的字段上添加注解`@QField`；
 
 当实体的字段值不为null时，会在`toPredicate`里动态加入条件，
-同一个字段可使用多个`@QFiled`注解，多个`@QFiled`注解的字段在生成查询条件时会默认使用`or`连接起来。如：
+同一个字段可使用多个`@QField`注解，多个`@QField`注解的字段在生成查询条件时会默认使用`or`连接起来。如：
 
-```text
+```java
 //数据库实体
 @Data
 @Entity
@@ -79,6 +91,7 @@ public class User implements Serializable {
     @CreatedDate
     private LocalDateTime createdTime;
 }
+
 //Dao
 @Repository
 public interface UserDao extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
@@ -89,15 +102,15 @@ public interface UserDao extends JpaRepository<User, Long>, JpaSpecificationExec
 @Setter
 @Getter
 public class UserQO extends QueryObject<User> {
-    @QFiled(name = "name", value = QType.EQUAL)
+    @QField(name = "name", value = QType.EQUAL)
     private String username;
 
-    @QFiled(name = "createdTime", value = QType.LESS_THAN_OR_EQUAL)
+    @QField(name = "createdTime", value = QType.LESS_THAN_OR_EQUAL)
     private LocalDateTime createdTimeLE;
 
 
-    @QFiled(name = "name", value = QType.EQUAL)
-    @QFiled(name = "email", value = QType.LIKE)
+    @QField(name = "name", value = QType.EQUAL)
+    @QField(name = "email", value = QType.LIKE)
     private String keyword;
 }
 
@@ -111,32 +124,34 @@ void testQuery() {
     userDao.findAll(qo);
 }
 
-//生成查询条件
-select
-    u1_0.id,
-    u1_0.created_time,
-    u1_0.email,
-    u1_0.name 
-from
-    t_user u1_0 
-where
-    u1_0.name=? 
-    and u1_0.created_time<=? 
-    and (
-        u1_0.name=? 
+
+```
+
+##### 生成查询条件
+
+```sql
+select u1_0.id,
+       u1_0.created_time,
+       u1_0.email,
+       u1_0.name
+from t_user u1_0
+where u1_0.name = ?
+  and u1_0.created_time <= ?
+  and (
+    u1_0.name = ?
         or u1_0.email like ?
     )
 ```
 
 ## 注解说明
 
-### 单字段使用单个`@QFiled`注解, 生成单个查询条件
+### 单字段使用单个`@QField`注解, 生成单个查询条件
 
 ```text
     /**
      * 用户名
      */
-    @QFiled(name = "name", value = QType.EQUAL)
+    @QField(name = "name", value = QType.EQUAL)
     private String username;
     
     //使用方法
@@ -156,18 +171,25 @@ where
         user0_.name=?
 ```
 
-### 同一个字段使用`@QGroup`注解并且`type=QGroup.Type.OR`
+### 同一个字段使用`@QFields`注解并且`type=QFields.Type.OR`
 
-同一个字段使用`@QGroup`注解并且`type=QGroup.Type.OR`, 在生成sql查询条件时, 会使用`or`连接. 当一字段使用多个`QFiled`
-注解时,也可视为是使用`@QGroup(type=QGroup.Type.OR)`. 如:
+同一个字段使用`@QFields`注解并且`type=QFields.Type.OR`, 在生成sql查询条件时, 会使用`or`连接. 当一字段使用多个`@QField`
+注解时,也可视为是使用`@QFields(type=QFields.Type.OR)`. 如:
 
 ```text
     /**
      * 查询条件为 用户名或者邮箱
      */
-    @QFiled(name = "name", value = QType.EQUAL)
-    @QFiled(name = "email", value = QType.LIKE)
+    @QField(name = "name", value = QType.EQUAL)
+    @QField(name = "email", value = QType.LIKE)
     private String keyword;
+    
+     /**
+     * 用户名或者邮箱
+     * 等同于上面的 keyword
+     */
+    @QFields({@QField(name = "name", value = QType.EQUAL), @QField(name = "email", value = QType.LIKE)})
+    private String nameEqualOrEmailLike;
     
     //使用方法
     UserQO qo = new UserQO();
@@ -187,15 +209,15 @@ where
         or user0_.email like ?
 ```
 
-### 同一个字段使用`@QGroup`注解, 并且`type=QGroup.Type.AND`
+### 同一个字段使用`@QFields`注解, 并且`type=QFields.Type.AND`
 
-同一个字段使用`@QGroup`注解, 并且`type=QGroup.Type.AND`,在生成查询条件时, 使用`and`连接. 如:
+同一个字段使用`@QFields`注解, 并且`type=QFields.Type.AND`,在生成查询条件时, 使用`and`连接. 如:
 
 ```text
     //注解字段
-    @QGroup(
-            value = {@QFiled(name = "name"), @QFiled(name = "email")},
-            type = QGroup.Type.AND
+    @QFields(
+            value = {@QField(name = "name"), @QField(name = "email")},
+            type = QFields.Type.AND
     )
     private String groupAnd;
     
@@ -219,7 +241,11 @@ where
 
 ## 联表查询
 
-联表查询需要在数据库实体中定义实体与实体之间的关联关系,并添加`@OneToMany`等关联注解。
+注解配置了`joinName`和`joinType`，如:` @QField(joinName = "purse", joinType = JoinType.LEFT)`，那么查询会走联表逻辑，
+但是联表查询提前提是需要在数据库实体中定义实体与实体之间的关联关系，并添加`@OneToMany`等关联注解。当注解的`forceJoin=true`
+时，会强制去执行这个join关系，不管这个字段值是否为空。默认情况是如果字段配置了join信息，那么只有在字段值不为`null`时才去执行联表操作。
+
+### 方法一：使用注解执行联表
 
 ```text
 /**
@@ -235,7 +261,7 @@ private List<Order> orders;
 /**
  * 订单号
  */
-@QFiled(joinName = "orders")
+@QField(joinName = "orders")
 private String orderNo;
 
 //使用方法
@@ -258,4 +284,61 @@ where
     orders1_.order_no=?
 ```
 
-具体使用方法请看test模块
+### 方法二：在`QueryObject`的`customPredicate`里值手动执行联表操作，如：
+
+这里手动执行的join会在使用这个类查询的所有查询中去执行join操作
+
+```java
+public class UserCustomJoinQO extends QueryObject<User> {
+    /**
+     * 用户id
+     */
+    @QField(name = "id")
+    private Long userId;
+
+    /**
+     * 默认去重
+     */
+    @Override
+    public boolean distinct() {
+        return true;
+    }
+
+    @Override
+    public Optional<Predicate> customPredicate(Root<User> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
+        root.join(User_.ORDERS, JoinType.LEFT);
+        root.join(User_.PURSE, JoinType.LEFT);
+        return Optional.empty();
+    }
+}
+```
+
+##### 测试用例
+
+```java
+
+@Test
+@DisplayName("根据用户id查询")
+void testJoinWithPurseUserId() {
+    UserCustomJoinQO qo = new UserCustomJoinQO();
+    qo.setUserId(122L);
+    userDao.findAll(qo);
+}
+```
+
+##### 生成的查询语句
+
+```sql
+select distinct user0_.id           as id1_2_,
+                user0_.created_time as created_2_2_,
+                user0_.email        as email3_2_,
+                user0_.name         as name4_2_
+from t_user user0_
+         left outer join
+     t_order orders1_ on user0_.id = orders1_.user_id
+         left outer join
+     t_purse purse2_ on user0_.id = purse2_.user_id
+where user0_.id = 122
+```
+
+具体使用方法请看[jpa-query-object-test](jpa-query-object-test)模块
