@@ -26,8 +26,9 @@ public abstract class QueryObject<T> implements Specification<T> {
 
     @Override
     public Predicate toPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
-        List<Predicate> predicates = toSpecWithLogicType(root, cq, cb);
+        List<Predicate> predicates = new ArrayList<>();
         customPredicate(root, cq, cb).ifPresent(predicates::add);
+        predicates.addAll(toSpecWithLogicType(root, cq, cb));
 
         cq.distinct(distinct());
 
@@ -152,6 +153,7 @@ public abstract class QueryObject<T> implements Specification<T> {
         }
         return root.getJoins().stream()
                 .filter(tJoin -> tJoin.getAttribute().getName().equals(joinName))
+                .filter(tJoin -> joinType.equals(tJoin.getJoinType()))
                 .findFirst()
                 .orElse(null);
     }
@@ -183,11 +185,11 @@ public abstract class QueryObject<T> implements Specification<T> {
 
         String column = qf.name() == null || qf.name().isEmpty() ? field.getName() : qf.name();
         Path path = ofNullable((From) getJoin(root, qf.joinName(), qf.joinType())).orElse(root).get(column);
-        return getPredicateWithType(qf.value(), path, fieldValue, cb);
+        return getPredicateWithType(cb, qf.value(), path, fieldValue);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    protected Predicate getPredicateWithType(QType qType, Path path, Object fieldValue, CriteriaBuilder cb) {
+    protected Predicate getPredicateWithType(CriteriaBuilder cb, QType qType, Path path, Object fieldValue) {
         switch (qType) {
             case EQUAL:
                 return cb.equal(path, fieldValue);
