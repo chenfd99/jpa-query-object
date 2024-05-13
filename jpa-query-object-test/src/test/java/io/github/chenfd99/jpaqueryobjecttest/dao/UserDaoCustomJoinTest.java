@@ -7,6 +7,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author ChenFD
  */
@@ -44,5 +48,13 @@ class UserDaoCustomJoinTest {
         qo.setOrderNo("1111");
         qo.setUserId(222L);
         userDao.findAll(qo);
+    }
+
+
+    public static void main(String[] args) {
+        List<Integer> list = new ArrayList<>(Arrays.asList(2, 3, 4, 5, 6, 7, 8, 9));
+        System.out.println(list);
+        list.removeAll(Arrays.asList(1, 5, 6));
+        System.out.println(list);
     }
 }

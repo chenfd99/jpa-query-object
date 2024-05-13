@@ -40,7 +40,7 @@ public class UserCustomJoinQO extends QueryObject<User> {
      * 默认去重
      */
     @Override
-    public boolean distinct() {
+    protected Boolean distinct() {
         return true;
     }
 
