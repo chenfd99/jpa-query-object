@@ -1,6 +1,5 @@
 package io.github.chenfd99.jpaqueryobjecttest.dao;
 
-import io.github.chenfd99.jpaqueryobjecttest.entity.User;
 import io.github.chenfd99.jpaqueryobjecttest.qo.UserJoinQO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,8 +19,6 @@ class UserDaoJoinTest {
     @Test
     @DisplayName("无查询条件")
     void testJoin() {
-        User user = new User();
-
         UserJoinQO qo = new UserJoinQO();
         userDao.findAll(qo);
     }
@@ -30,8 +27,6 @@ class UserDaoJoinTest {
     @Test
     @DisplayName("根据钱包用户id查询")
     void testJoinWithPurseUserId() {
-        User user = new User();
-
         UserJoinQO qo = new UserJoinQO();
         qo.setPurseUserId(122L);
         userDao.findAll(qo);
@@ -41,8 +36,6 @@ class UserDaoJoinTest {
     @Test
     @DisplayName("其他条件")
     void testJoinWithOther() {
-        User user = new User();
-
         UserJoinQO qo = new UserJoinQO();
         qo.setOrderNo("1111");
         qo.setPurseBalanceGE(BigDecimal.valueOf(100.0));
