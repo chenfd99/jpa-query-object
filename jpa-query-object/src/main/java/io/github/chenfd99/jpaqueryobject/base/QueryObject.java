@@ -9,8 +9,6 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static java.util.Optional.ofNullable;
-
 
 /**
  * 基础查询类
@@ -67,7 +65,7 @@ public abstract class QueryObject<T> implements Specification<T> {
     protected List<Field> getAllFields() {
         List<Field> fieldList = new ArrayList<>();
         Class<?> searchType = getClass();
-        while (searchType != Object.class) {
+        while (searchType != QueryObject.class) {
             fieldList.addAll(Arrays.asList(searchType.getDeclaredFields()));
             searchType = searchType.getSuperclass();
         }
@@ -81,15 +79,22 @@ public abstract class QueryObject<T> implements Specification<T> {
         for (Field field : fields) {
 
             boolean fieldAccessible = field.isAccessible();
-            field.setAccessible(true);
-
-            handleJoinAnno(root, field);
-            List<Predicate> fieldPredicates = handleQFieldAnno(root, cq, cb, field);
-            if (fieldPredicates != null && !fieldPredicates.isEmpty()) {
-                predicates.addAll(fieldPredicates);
+            if (!fieldAccessible) {
+                field.setAccessible(true);
             }
 
-            field.setAccessible(fieldAccessible);
+            List<Predicate> fieldPredicates = handleQFieldAnno(root, cq, cb, field);
+            if (fieldPredicates == null || fieldPredicates.isEmpty()) {
+                if (!fieldAccessible) {
+                    field.setAccessible(false);
+                }
+                continue;
+            }
+            predicates.addAll(fieldPredicates);
+
+            if (!fieldAccessible) {
+                field.setAccessible(false);
+            }
         }
 
         return predicates.stream()
@@ -100,11 +105,6 @@ public abstract class QueryObject<T> implements Specification<T> {
 
     protected List<Predicate> handleQFieldAnno(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field) {
         List<Predicate> predicates = new ArrayList<>();
-
-        //字段值为空 不进行查询判断
-        if (getFieldValue(field) == null) {
-            return null;
-        }
 
         QField qf = field.getAnnotation(QField.class);
         QFields qg = field.getAnnotation(QFields.class);
@@ -138,34 +138,16 @@ public abstract class QueryObject<T> implements Specification<T> {
         return predicates;
     }
 
-    /**
-     * 处理Join注解
-     */
-    protected void handleJoinAnno(Root<T> root, Field qf) {
-        QField[] qFields = qf.getAnnotationsByType(QField.class);
-
-        for (QField qField : qFields) {
-            createJoin(root, qField, qf);
-        }
-    }
-
-    protected void createJoin(Root<T> root, QField qf, Field field) {
+    protected Join<T, ?> createJoin(Root<T> root, QField qf, Field field) {
         String joinName = qf.joinName();
-        if (joinName == null || joinName.trim().isEmpty() || qf.joinType() == null) {
-            return;
-        }
-
-        //不是强制join并且字段值为null
-        if (!qf.forceJoin() && getFieldValue(field) == null) {
-            return;
-        }
 
         //已经 join 了
-        if (ofNullable(getJoin(root, joinName, qf.joinType())).isPresent()) {
-            return;
+        Join<T, ?> join = getJoin(root, joinName, qf.joinType());
+        if (join != null) {
+            return join;
         }
 
-        root.join(joinName, qf.joinType());
+        return root.join(joinName, qf.joinType());
     }
 
     protected Join<T, ?> getJoin(Root<T> root, String joinName, JoinType joinType) {
@@ -198,6 +180,16 @@ public abstract class QueryObject<T> implements Specification<T> {
     protected Predicate createPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field, QField qf) {
         Object fieldValue = getFieldValue(field);
 
+        Join<T, ?> join = null;
+        //join 那么不为空 并且 强制join 或者有值 执行join操作
+        if (!qf.joinName().isEmpty() && (qf.forceJoin() || fieldValue != null)) {
+            join = createJoin(root, qf, field);
+        }
+
+        if (fieldValue == null) {
+            return null;
+        }
+
         //不查询String空条件
         if (String.class.isAssignableFrom(fieldValue.getClass()) && ((String) fieldValue).trim().isEmpty()) {
             return null;
@@ -205,7 +197,7 @@ public abstract class QueryObject<T> implements Specification<T> {
 
 
         String column = qf.name() == null || qf.name().isEmpty() ? field.getName() : qf.name();
-        Path path = ofNullable((From) getJoin(root, qf.joinName(), qf.joinType())).orElse(root).get(column);
+        Path path = (join == null ? root : join).get(column);
         return getPredicateWithType(cb, qf.value(), path, fieldValue);
     }
 
