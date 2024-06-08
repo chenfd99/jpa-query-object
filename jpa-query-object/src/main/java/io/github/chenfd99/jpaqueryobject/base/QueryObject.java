@@ -67,7 +67,7 @@ public abstract class QueryObject<T> implements Specification<T> {
     protected List<Field> getAllFields() {
         List<Field> fieldList = new ArrayList<>();
         Class<?> searchType = getClass();
-        while (searchType != null) {
+        while (searchType != Object.class) {
             fieldList.addAll(Arrays.asList(searchType.getDeclaredFields()));
             searchType = searchType.getSuperclass();
         }
@@ -84,7 +84,10 @@ public abstract class QueryObject<T> implements Specification<T> {
             field.setAccessible(true);
 
             handleJoinAnno(root, field);
-            handleQFieldAnno(root, cq, cb, field, predicates);
+            List<Predicate> fieldPredicates = handleQFieldAnno(root, cq, cb, field);
+            if (fieldPredicates != null && !fieldPredicates.isEmpty()) {
+                predicates.addAll(fieldPredicates);
+            }
 
             field.setAccessible(fieldAccessible);
         }
@@ -95,40 +98,44 @@ public abstract class QueryObject<T> implements Specification<T> {
     }
 
 
-    protected void handleQFieldAnno(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field, List<Predicate> predicates) {
+    protected List<Predicate> handleQFieldAnno(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field) {
+        List<Predicate> predicates = new ArrayList<>();
+
         //字段值为空 不进行查询判断
         if (getFieldValue(field) == null) {
-            return;
+            return null;
         }
 
         QField qf = field.getAnnotation(QField.class);
         QFields qg = field.getAnnotation(QFields.class);
         if (qf == null && qg == null) {
-            return;
+            return null;
         }
 
         if (qf != null) {
-            ofNullable(createPredicate(root, cq, cb, field, qf)).ifPresent(predicates::add);
+            Predicate predicate = createPredicate(root, cq, cb, field, qf);
+            if (predicate != null) {
+                predicates.add(predicate);
+            }
         }
 
         if (qg == null || qg.type() == null) {
-            return;
+            return predicates;
         }
 
-        List<Predicate> groupPredicates = Arrays.stream(qg.value())
+        Predicate[] groupPredicates = Arrays.stream(qg.value())
                 .map(qFiled -> createPredicate(root, cq, cb, field, qFiled))
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .toArray(Predicate[]::new);
 
-        if (groupPredicates.isEmpty()) {
-            return;
+        if (groupPredicates.length == 0) {
+            return predicates;
         }
 
-        if (qg.type() == QFields.Type.OR) {
-            predicates.add(cb.or(groupPredicates.toArray(new Predicate[0])));
-        } else if (qg.type() == QFields.Type.AND) {
-            predicates.add(cb.and(groupPredicates.toArray(new Predicate[0])));
-        }
+        Predicate predicate = qg.type() == QFields.Type.OR ? cb.or(groupPredicates) : cb.and(groupPredicates);
+
+        predicates.add(predicate);
+        return predicates;
     }
 
     /**
