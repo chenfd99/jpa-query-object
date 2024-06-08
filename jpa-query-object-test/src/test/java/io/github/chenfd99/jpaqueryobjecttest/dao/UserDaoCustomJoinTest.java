@@ -1,41 +1,61 @@
 package io.github.chenfd99.jpaqueryobjecttest.dao;
 
+import io.github.chenfd99.jpaqueryobjecttest.base.BaseJoinTest;
+import io.github.chenfd99.jpaqueryobjecttest.entity.Order;
+import io.github.chenfd99.jpaqueryobjecttest.entity.Order_;
+import io.github.chenfd99.jpaqueryobjecttest.entity.Purse;
 import io.github.chenfd99.jpaqueryobjecttest.qo.UserCustomJoinQO;
+import io.github.chenfd99.jpaqueryobjecttest.qo.UserJoinOrderQO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
 /**
  * @author ChenFD
  */
-@DataJpaTest(properties = "spring.jpa.properties.hibernate.format_sql=true")
-class UserDaoCustomJoinTest {
+@DataJpaTest
+@ExtendWith(OutputCaptureExtension.class)
+class UserDaoCustomJoinTest implements BaseJoinTest {
     @Autowired
     private UserDao userDao;
 
     @Test
     @DisplayName("无查询条件")
-    void testJoin() {
+    void testJoin(CapturedOutput output) {
         UserCustomJoinQO qo = new UserCustomJoinQO();
         userDao.findAll(qo);
+
+
+        String outString = output.getOut();
+        assertLeftJoinTable(outString, Purse.class);
+        assertLeftJoinTable(outString, Order.class);
     }
 
 
     @Test
     @DisplayName("根据用户id查询")
-    void testJoinWithPurseUserId() {
+    void testJoinWithPurseUserId(CapturedOutput output) {
         UserCustomJoinQO qo = new UserCustomJoinQO();
         qo.setUserId(122L);
         userDao.findAll(qo);
+
+        String outString = output.getOut();
+        assertLeftJoinTable(outString, Purse.class);
+        assertLeftJoinTable(outString, Order.class);
     }
 
     @Test
-    @DisplayName("其他条件")
-    void testJoinWithOther() {
-        UserCustomJoinQO qo = new UserCustomJoinQO();
+    @DisplayName("join Order orderNo")
+    void testUserJoinOrder(CapturedOutput output) {
+        UserJoinOrderQO qo = new UserJoinOrderQO();
         qo.setOrderNo("1111");
-        qo.setUserId(222L);
         userDao.findAll(qo);
+
+
+        assertQueryCondition(output.getOut(), Order.class, Order_.ORDER_NO);
     }
 }

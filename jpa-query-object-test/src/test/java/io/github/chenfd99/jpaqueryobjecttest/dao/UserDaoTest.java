@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author ChenFD
  */
-@DataJpaTest(properties = "spring.jpa.properties.hibernate.format_sql=true")
+@DataJpaTest
 class UserDaoTest {
     @Autowired
     private UserDao userDao;
@@ -34,7 +35,7 @@ class UserDaoTest {
         long count = userDao.count();
         System.out.println("count = " + count);
 
-        long usersCount = Stream.generate(() -> userDao.save(new User())).limit(5).count();
+        long usersCount = userDao.saveAllAndFlush(Stream.generate(User::new).limit(5).toList()).size();
         long count1 = userDao.count(UserQO.builder().nameIsNull(true).build());
 
         System.out.println("count1 = " + count1);
@@ -47,7 +48,7 @@ class UserDaoTest {
         System.out.println("count = " + count);
 
         String name = randomAlphabetic(22);
-        long usersCount = Stream.generate(() -> userDao.save(new User(name))).limit(5).count();
+        long usersCount = userDao.saveAllAndFlush(Stream.generate(() -> new User(name)).limit(5).toList()).size();
         System.out.println("usersCount = " + usersCount);
 
         long count1 = userDao.count(UserQO.builder().nameNotNull(true).build());
@@ -61,11 +62,10 @@ class UserDaoTest {
         System.out.println("count = " + count);
 
         String name = randomAlphabetic(22);
-        long usersCount =
-                Stream.generate(() ->
-                                userDao.save(new User(RandomUtils.nextInt() % 2 == 0 ? name : null)))
-                        .limit(11)
-                        .count();
+        Supplier<User> supplier = () -> new User(RandomUtils.nextInt() % 2 == 0 ? name : null);
+        List<User> userList = Stream.generate(supplier).limit(11).toList();
+        userDao.saveAllAndFlush(userList);
+        long usersCount = userList.size();
         System.out.println("usersCount = " + usersCount);
 
         long count1 = userDao.count(UserQO.builder().nameEqualOrNull(name).build());
@@ -79,10 +79,8 @@ class UserDaoTest {
         System.out.println("count = " + count);
 
         String name = randomAlphabetic(22);
-        long nameCount =
-                Stream.generate(() -> userDao.save(new User(name)))
-                        .limit(5)
-                        .count();
+        long nameCount = userDao.saveAllAndFlush(Stream.generate(() -> new User(name)).limit(5).toList()).size();
+
 
         long nameNullCount =
                 Stream.generate(() -> userDao.save(new User()))
@@ -111,11 +109,8 @@ class UserDaoTest {
     @DisplayName("模糊查询")
     void testLikeQuery() {
         String nameLike = randomAlphabetic(20);
-        List<User> userList = Stream.generate(() ->
-                        userDao.save(User.builder().name(nameLike + randomAlphabetic(6)).build())
-                )
-                .limit(10).toList();
-        userList.forEach(System.out::println);
+        List<User> userList = Stream.generate(() -> new User(nameLike + randomAlphabetic(6))).limit(111).toList();
+        userDao.saveAllAndFlush(userList);
 
         System.out.println("查询后的数据");
         List<User> resultList = userDao.findAll(UserQO.builder().usernameLike(nameLike).build());
@@ -133,23 +128,13 @@ class UserDaoTest {
     @DisplayName("用用一个关键词查询多个条件使用or连接")
     void testGroupOr() {
         String nameEqualOrEmailLike = randomAlphabetic(20);
-        List<User> userList = Stream.generate(() -> {
-                            User user = User.builder()
-                                    .name(nameEqualOrEmailLike)
-                                    .build();
-                            return userDao.save(user);
-                        }
-                )
+        List<User> userList = Stream.generate(() -> new User(nameEqualOrEmailLike))
                 .limit(6).toList();
-        List<User> userList2 = Stream.generate(() -> {
-                            User user = User.builder()
-                                    .email(nameEqualOrEmailLike + randomAlphabetic(6))
-                                    .build();
-                            return userDao.save(user);
-                        }
-                )
-                .limit(7).toList();
+        userDao.saveAllAndFlush(userList);
 
+        List<User> userList2 = Stream.generate(() -> new User().setEmail(nameEqualOrEmailLike + randomAlphabetic(6)))
+                .limit(7).toList();
+        userDao.saveAllAndFlush(userList2);
 
         System.out.println("查询后的数据");
         UserQO qo = UserQO.builder().nameEqualOrEmailLike(nameEqualOrEmailLike).build();
@@ -165,13 +150,10 @@ class UserDaoTest {
     @Transactional
     @DisplayName("连表查询")
     void testJoinQuery() {
-        User user = User.builder()
-                .name(randomAlphabetic(11))
-                .build();
-        userDao.save(user);
+        User user = userDao.save(new User().setName(randomAlphabetic(11)));
 
         Order order = Order.builder()
-                .userId(user.getId())
+                .user(user)
                 .orderNo("2033_" + randomNumeric(11))
                 .build();
         orderDao.save(order);
@@ -198,15 +180,16 @@ class UserDaoTest {
         User user = User.builder()
                 .name(randomAlphabetic(11))
                 .build();
-        userDao.save(user);
+
+        Stream<User> userStream = Stream.generate(() -> new User(orderNoOrUsername)).limit(4);
+        List<User> userList = Stream.concat(userStream, Stream.of(user)).toList();
+        userDao.saveAll(userList);
+
         Order order = Order.builder()
-                .userId(user.getId())
+                .user(user)
                 .orderNo(orderNoOrUsername)
                 .build();
         orderDao.save(order);
-
-        List<User> userList = Stream.concat(Stream.generate(() -> userDao.save(new User(orderNoOrUsername))).limit(4), Stream.of(user))
-                .toList();
 
         System.out.println("user:");
         userDao.findAll().forEach(System.out::println);
@@ -232,8 +215,8 @@ class UserDaoTest {
         userDao.save(user);
 
         //干扰数据
-        List<User> list1 = Stream.generate(() -> userDao.save(User.builder().name(keyword).build())).limit(6).toList();
-        List<User> list = Stream.generate(() -> userDao.save(User.builder().email(keyword).build())).limit(6).toList();
+        userDao.saveAllAndFlush(Stream.generate(() -> new User(keyword)).limit(6).toList());
+        userDao.saveAllAndFlush(Stream.generate(() -> new User().setEmail(keyword)).limit(6).toList());
 
 
         System.out.println("查询后的数据");
@@ -250,11 +233,9 @@ class UserDaoTest {
     @DisplayName("In 查询")
     void testIn() {
         System.out.println("准备的数据");
-        List<User> userList = Stream.generate(() ->
-                        userDao.save(new User(randomAlphabetic(6)))
-                )
+        List<User> userList = Stream.generate(() -> new User(randomAlphabetic(6)))
                 .limit(10).collect(Collectors.toList());
-        userDao.findAll().forEach(System.out::println);
+        userDao.saveAllAndFlush(userList);
 
         Collections.shuffle(userList);
         List<Long> idList = userList.stream()
@@ -280,9 +261,10 @@ class UserDaoTest {
     void testNotIn() {
         System.out.println("准备的数据");
         List<User> userList = Stream.generate(() ->
-                        userDao.save(new User(randomAlphabetic(6)))
-                )
+                        new User(randomAlphabetic(6)))
                 .limit(10).collect(Collectors.toList());
+        userDao.saveAllAndFlush(userList);
+
         List<User> totalUserList = userDao.findAll();
         totalUserList.forEach(System.out::println);
         System.out.println();
@@ -296,8 +278,8 @@ class UserDaoTest {
         String idsStr = idList.stream().map(Object::toString).collect(Collectors.joining(",\t"));
         System.out.println(idsStr);
 
-        System.out.println("查找后的数据");
         List<User> users = userDao.findAll(UserQO.builder().idNotIn(idList).build());
+        System.out.println("查找后的数据");
         for (User user : users) {
             System.out.println(user);
             assertFalse(idList.contains(user.getId()));
