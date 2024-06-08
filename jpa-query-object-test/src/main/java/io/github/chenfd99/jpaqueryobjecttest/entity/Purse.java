@@ -19,17 +19,22 @@ public class Purse {
 
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "purse_seq")
+    @SequenceGenerator(name = "purse_seq", initialValue = 1000)
+    @Column(name = "id")
     private Long id;
 
     @ColumnDefault("0")
-    @Column(nullable = false)
+    @Column(nullable = false, name = "balance")
     private BigDecimal balance;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
-            referencedColumnName = "id", name = "userId")
+            referencedColumnName = "id", name = "user_id")
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     private User user;
+
+    @Column(name = "user_id", insertable = false, updatable = false)
+    private Long userId;
 }
