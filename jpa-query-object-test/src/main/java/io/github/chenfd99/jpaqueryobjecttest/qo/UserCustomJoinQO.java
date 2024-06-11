@@ -6,10 +6,8 @@ import io.github.chenfd99.jpaqueryobjecttest.entity.User;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User_;
 import lombok.*;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.JoinType;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
+import java.util.List;
 
 
 /**
@@ -48,8 +46,9 @@ public class UserCustomJoinQO extends QueryObject<User> {
 
 
     @Override
-    protected void customJoin(Root<User> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
+    protected List<Predicate> customJoin(Root<User> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
         root.join(User_.ORDERS, JoinType.LEFT);
         root.join(User_.PURSE, JoinType.LEFT);
+        return null;
     }
 }
