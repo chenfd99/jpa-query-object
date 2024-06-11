@@ -5,9 +5,8 @@ import io.github.chenfd99.jpaqueryobject.base.QueryObject;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User_;
 import lombok.*;
-import lombok.experimental.Accessors;
 
-import javax.persistence.criteria.*;
+import javax.persistence.criteria.JoinType;
 
 
 @Setter
@@ -16,9 +15,6 @@ import javax.persistence.criteria.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserJoinOrderQO extends QueryObject<User> {
-
-    @Getter
-    private CriteriaQuery<?> cq;
 
     /**
      * 根据订单号查询
@@ -35,10 +31,4 @@ public class UserJoinOrderQO extends QueryObject<User> {
         return true;
     }
 
-
-    @Override
-    public Predicate toPredicate(Root<User> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
-        this.cq = cq;
-        return super.toPredicate(root, cq, cb);
-    }
 }

@@ -25,14 +25,17 @@ public abstract class QueryObject<T> implements Specification<T> {
     @Override
     public Predicate toPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
         List<Predicate> predicates = new ArrayList<>();
-        customJoin(root, cq, cb, predicates);
+        customJoin(root, cq, cb);
 
         Boolean distinct = distinct();
         if (distinct != null) {
             cq.distinct(distinct);
         }
 
-        customPredicate(root, cq, cb).ifPresent(predicates::add);
+        List<Predicate> customPredicate = customPredicate(root, cq, cb);
+        if (customPredicate != null && !customPredicate.isEmpty()) {
+            predicates.addAll(customPredicate);
+        }
 
         predicates.addAll(toSpecWithLogicType(root, cq, cb));
 
@@ -47,15 +50,14 @@ public abstract class QueryObject<T> implements Specification<T> {
     /**
      * 自定义join
      */
-    protected void customJoin(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, List<Predicate> predicates) {
-
+    protected void customJoin(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
     }
 
     /**
      * 添加特定条件
      */
-    protected Optional<Predicate> customPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
-        return Optional.empty();
+    protected List<Predicate> customPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
+        return Collections.emptyList();
     }
 
 
