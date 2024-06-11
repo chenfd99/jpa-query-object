@@ -2,14 +2,14 @@ package io.github.chenfd99.jpaqueryobjecttest.qo;
 
 import io.github.chenfd99.jpaqueryobject.annotation.QField;
 import io.github.chenfd99.jpaqueryobject.base.QueryObject;
+import io.github.chenfd99.jpaqueryobjecttest.entity.Purse_;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User_;
+import jakarta.persistence.criteria.*;
 import lombok.*;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.JoinType;
-import javax.persistence.criteria.Root;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -28,7 +28,7 @@ public class UserCustomJoinQO extends QueryObject<User> {
     /**
      * 用户id
      */
-    @QField(name = "id")
+    @QField(joinName = User_.PURSE, joinType = JoinType.LEFT, forceJoin = true)
     private Long userId;
 
     /**

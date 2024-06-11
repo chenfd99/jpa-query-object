@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.chenfd99</groupId>
-    <version>0.13.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <artifactId>jpa-query-object</artifactId>
     <name>jpa-query-object</name>
     <description>jpa Specification query object</description>
@@ -17,7 +17,7 @@
     <properties>
         <maven.compiler.release>8</maven.compiler.release>
         <git-commit-id-maven-plugin.version>8.0.2</git-commit-id-maven-plugin.version>
-        <spring-boot.version>2.7.18</spring-boot.version>
+        <spring-boot.version>3.3.0</spring-boot.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -117,51 +117,6 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.eclipse.transformer</groupId>
-                <artifactId>transformer-maven-plugin</artifactId>
-                <version>0.5.0</version>
-                <executions>
-                    <execution>
-                        <id>jakarta-ee</id>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <classifier>jakarta</classifier>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>javadoc-jar</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <artifact>
-                                <groupId>io.smallrye.common</groupId>
-                                <artifactId>smallrye-common-annotation</artifactId>
-                                <version>1.11.0</version>
-                                <classifier>javadoc</classifier>
-                            </artifact>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>source-jar</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <artifact>
-                                <groupId>io.smallrye.common</groupId>
-                                <artifactId>smallrye-common-annotation</artifactId>
-                                <version>1.11.0</version>
-                                <classifier>sources</classifier>
-                            </artifact>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

@@ -2,9 +2,9 @@ package io.github.chenfd99.jpaqueryobject.base;
 
 import io.github.chenfd99.jpaqueryobject.annotation.QField;
 import io.github.chenfd99.jpaqueryobject.annotation.QFields;
+import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
 
-import javax.persistence.criteria.*;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;

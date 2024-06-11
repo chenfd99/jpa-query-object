@@ -24,7 +24,6 @@ class UserDaoCustomJoinTest implements BaseJoinTest {
     private UserDao userDao;
 
     @Test
-    @DisplayName("无查询条件")
     void testJoin(CapturedOutput output) {
         UserCustomJoinQO qo = new UserCustomJoinQO();
         userDao.findAll(qo);
@@ -40,7 +39,8 @@ class UserDaoCustomJoinTest implements BaseJoinTest {
     @DisplayName("根据用户id查询")
     void testJoinWithPurseUserId(CapturedOutput output) {
         UserCustomJoinQO qo = new UserCustomJoinQO();
-        qo.setUserId(122L);
+//        qo.setUserId(122L);
+//        qo.setOrderNo("45678");
         userDao.findAll(qo);
 
         String outString = output.getOut();

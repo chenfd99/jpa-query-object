@@ -2,8 +2,8 @@ package io.github.chenfd99.jpaqueryobject.annotation;
 
 
 import io.github.chenfd99.jpaqueryobject.base.QType;
+import jakarta.persistence.criteria.JoinType;
 
-import javax.persistence.criteria.JoinType;
 import java.lang.annotation.*;
 
 

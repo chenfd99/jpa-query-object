@@ -5,7 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 @Data
@@ -31,8 +31,6 @@ public class Purse {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
             referencedColumnName = "id", name = "user_id")
-    @Setter(AccessLevel.NONE)
-    @Getter(AccessLevel.NONE)
     private User user;
 
     @Column(name = "user_id", insertable = false, updatable = false)
