@@ -25,7 +25,7 @@ public class UserForceJoinQO extends QueryObject<User> {
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     @QFields({@QField(joinName = User_.ORDERS, joinType = JoinType.INNER, forceJoin = true),
-            @QField(joinName = User_.PURSE, joinType = JoinType.LEFT, forceJoin = true)})
+            @QField(joinName = User_.PURSE, joinType = JoinType.INNER, forceJoin = true)})
     private Long joinKeyword;
 
 

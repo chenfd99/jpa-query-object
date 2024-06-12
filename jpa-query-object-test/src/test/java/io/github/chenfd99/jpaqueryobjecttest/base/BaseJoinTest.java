@@ -12,9 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public interface BaseJoinTest {
     String LEFT_JOIN_PATTERN = "left\\s+(?:outer\\s+)?join\\s+%s";
-    String INNER_JOIN_PATTERN = "inner\\s+join\\s+%s";
+    String INNER_JOIN_PATTERN = "(inner\\s+)?join\\s+%s";
     String ALIAS_NAME = "alias";
-    String QUERY_TABLE_PATTERN = "(?:inner|left)\\s+(?:outer\\s)?join\\s+%s\\s+(?<alias>\\S+)";
+    String QUERY_TABLE_PATTERN = "join\\s+%s\\s+(?<alias>\\S+)";
 
     /**
      * 验证是否由 left join

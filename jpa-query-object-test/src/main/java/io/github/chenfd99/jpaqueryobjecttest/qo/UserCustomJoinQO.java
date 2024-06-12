@@ -2,6 +2,7 @@ package io.github.chenfd99.jpaqueryobjecttest.qo;
 
 import io.github.chenfd99.jpaqueryobject.annotation.QField;
 import io.github.chenfd99.jpaqueryobject.base.QueryObject;
+import io.github.chenfd99.jpaqueryobjecttest.entity.Purse_;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User_;
 import jakarta.persistence.criteria.*;
@@ -48,7 +49,8 @@ public class UserCustomJoinQO extends QueryObject<User> {
     @Override
     protected List<Predicate> customJoin(Root<User> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
         root.join(User_.PURSE);
-        return null;
+        Join<Object, Object> purseJoin = root.join(User_.PURSE, JoinType.LEFT);
+        return List.of(cb.ge(purseJoin.get(Purse_.BALANCE), 200));
     }
 
 }

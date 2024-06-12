@@ -6,9 +6,9 @@ import io.github.chenfd99.jpaqueryobject.base.QueryObject;
 import io.github.chenfd99.jpaqueryobjecttest.entity.Purse_;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User_;
+import jakarta.persistence.criteria.JoinType;
 import lombok.*;
 
-import jakarta.persistence.criteria.JoinType;
 import java.math.BigDecimal;
 
 
@@ -32,7 +32,7 @@ public class UserJoinQO extends QueryObject<User> {
             joinType = JoinType.LEFT,
             name = Purse_.USER,
             value = QType.EQUAL)
-    private Long purseUserId;
+    private User purseUserId;
 
 
     /**

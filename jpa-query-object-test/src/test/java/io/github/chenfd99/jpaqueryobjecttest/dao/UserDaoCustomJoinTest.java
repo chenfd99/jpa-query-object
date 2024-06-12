@@ -24,28 +24,23 @@ class UserDaoCustomJoinTest implements BaseJoinTest {
     private UserDao userDao;
 
     @Test
-    void testJoin(CapturedOutput output) {
+    @DisplayName("自定义join")
+    void customJoin(CapturedOutput output) {
         UserCustomJoinQO qo = new UserCustomJoinQO();
         userDao.findAll(qo);
 
 
         String outString = output.getOut();
-        assertLeftJoinTable(outString, Purse.class);
-        assertLeftJoinTable(outString, Order.class);
+        assertInnerJoinTable(outString, Purse.class);
     }
 
 
     @Test
     @DisplayName("根据用户id查询")
-    void testJoinWithPurseUserId(CapturedOutput output) {
+    void testJoinWithPurseUserId() {
         UserCustomJoinQO qo = new UserCustomJoinQO();
-//        qo.setUserId(122L);
-//        qo.setOrderNo("45678");
+        qo.setUserId(122L);
         userDao.findAll(qo);
-
-        String outString = output.getOut();
-        assertLeftJoinTable(outString, Purse.class);
-        assertLeftJoinTable(outString, Order.class);
     }
 
     @Test

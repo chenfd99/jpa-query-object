@@ -1,10 +1,7 @@
 package io.github.chenfd99.jpaqueryobjecttest.dao;
 
 import io.github.chenfd99.jpaqueryobjecttest.base.BaseJoinTest;
-import io.github.chenfd99.jpaqueryobjecttest.entity.Order;
-import io.github.chenfd99.jpaqueryobjecttest.entity.Order_;
-import io.github.chenfd99.jpaqueryobjecttest.entity.Purse;
-import io.github.chenfd99.jpaqueryobjecttest.entity.Purse_;
+import io.github.chenfd99.jpaqueryobjecttest.entity.*;
 import io.github.chenfd99.jpaqueryobjecttest.qo.UserForceJoinQO;
 import io.github.chenfd99.jpaqueryobjecttest.qo.UserJoinQO;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +30,7 @@ class UserDaoJoinTest implements BaseJoinTest {
         userDao.findAll(qo);
 
         assertInnerJoinTable(output.getOut(), Order.class);
-        assertLeftJoinTable(output.getOut(), Purse.class);
+        assertInnerJoinTable(output.getOut(), Purse.class);
     }
 
 
@@ -41,7 +38,7 @@ class UserDaoJoinTest implements BaseJoinTest {
     @DisplayName("根据钱包用户id查询")
     void testJoinWithPurseUserId(CapturedOutput output) {
         UserJoinQO qo = new UserJoinQO();
-        qo.setPurseUserId(122L);
+        qo.setPurseUserId(new User().setId(111L));
         userDao.findAll(qo);
 
         assertQueryCondition(output, Purse.class, Purse_.USER_ID);
