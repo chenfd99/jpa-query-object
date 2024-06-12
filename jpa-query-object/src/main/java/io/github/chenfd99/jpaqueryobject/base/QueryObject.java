@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
  * 基础查询类
  */
 public abstract class QueryObject<T> implements Specification<T> {
-
     /**
      * 去重
      */
@@ -69,13 +68,13 @@ public abstract class QueryObject<T> implements Specification<T> {
      * 获取所有的字段
      */
     protected List<Field> getAllFields() {
-        List<Field> fieldList = new ArrayList<>();
-        Class<?> searchType = getClass();
-        while (searchType != QueryObject.class) {
-            fieldList.addAll(Arrays.asList(searchType.getDeclaredFields()));
-            searchType = searchType.getSuperclass();
+        List<Field> fields = new ArrayList<>();
+
+        for (Class<?> searchType = this.getClass(); searchType != QueryObject.class; searchType = searchType.getSuperclass()) {
+            fields.addAll(Arrays.asList(searchType.getDeclaredFields()));
         }
-        return fieldList;
+
+        return fields;
     }
 
 
@@ -90,13 +89,9 @@ public abstract class QueryObject<T> implements Specification<T> {
             }
 
             List<Predicate> fieldPredicates = handleQFieldAnno(root, cq, cb, field);
-            if (fieldPredicates == null || fieldPredicates.isEmpty()) {
-                if (!fieldAccessible) {
-                    field.setAccessible(false);
-                }
-                continue;
+            if (fieldPredicates != null && !fieldPredicates.isEmpty()) {
+                predicates.addAll(fieldPredicates);
             }
-            predicates.addAll(fieldPredicates);
 
             if (!fieldAccessible) {
                 field.setAccessible(false);
