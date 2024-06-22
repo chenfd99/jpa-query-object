@@ -5,6 +5,7 @@ import io.github.chenfd99.jpaqueryobjecttest.entity.Order;
 import io.github.chenfd99.jpaqueryobjecttest.entity.Order_;
 import io.github.chenfd99.jpaqueryobjecttest.entity.Purse;
 import io.github.chenfd99.jpaqueryobjecttest.qo.UserCustomJoinQO;
+import io.github.chenfd99.jpaqueryobjecttest.qo.UserCustomJoinQO2;
 import io.github.chenfd99.jpaqueryobjecttest.qo.UserJoinOrderQO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,6 +56,16 @@ class UserDaoCustomJoinTest implements BaseJoinTest {
         qo.setOrderNo("1111");
         userDao.findAll(qo);
 
+
+        assertQueryCondition(output.getOut(), Order.class, Order_.ORDER_NO);
+    }
+
+    @Test
+    @DisplayName("orderNo 有则手动改执行join查询")
+    void testUserJoinOrderNo2(CapturedOutput output) {
+        UserCustomJoinQO2 qo = new UserCustomJoinQO2();
+        qo.setOrderNo2("201109UUUU");
+        userDao.findAll(qo);
 
         assertQueryCondition(output.getOut(), Order.class, Order_.ORDER_NO);
     }

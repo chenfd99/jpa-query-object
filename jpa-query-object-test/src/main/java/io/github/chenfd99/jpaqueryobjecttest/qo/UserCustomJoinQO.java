@@ -35,16 +35,6 @@ public class UserCustomJoinQO extends QueryObject<User> {
     @QField(joinName = User_.ORDERS, joinType = JoinType.LEFT)
     private String orderNo;
 
-
-    /**
-     * 默认去重
-     */
-    @Override
-    protected Boolean distinct() {
-        return true;
-    }
-
-
     @Override
     protected List<Predicate> customJoin(Root<User> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
         root.join(User_.ORDERS, JoinType.LEFT);
