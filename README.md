@@ -254,7 +254,7 @@ where u1_0.name = ?
  * 当qo中使用连表查询时,也会使用到这个字段
  */
 @OneToMany(fetch = FetchType.LAZY)
-@JoinColumn(name = "memberId")
+@JoinColumn(name = "user_id")
 private List<Order> orders;
 
 //查询实体注解
@@ -284,7 +284,7 @@ where
     orders1_.order_no=?
 ```
 
-### 方法二：在`QueryObject`的`customPredicate`里值手动执行联表操作，如：
+### 方法二：在`QueryObject`的`customJoin`里值手动执行联表操作，如：
 
 这里手动执行的join会在使用这个类查询的所有查询中去执行join操作
 
@@ -297,18 +297,16 @@ public class UserCustomJoinQO extends QueryObject<User> {
     private Long userId;
 
     /**
-     * 默认去重
+     * 根据订单号查询
      */
-    @Override
-    public boolean distinct() {
-        return true;
-    }
+    @QField(joinName = User_.ORDERS, joinType = JoinType.LEFT)
+    private String orderNo;
 
     @Override
-    public Optional<Predicate> customPredicate(Root<User> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
+    protected List<Predicate> customJoin(Root<User> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
         root.join(User_.ORDERS, JoinType.LEFT);
         root.join(User_.PURSE, JoinType.LEFT);
-        return Optional.empty();
+        return null;
     }
 }
 ```
@@ -318,10 +316,9 @@ public class UserCustomJoinQO extends QueryObject<User> {
 ```java
 
 @Test
-@DisplayName("根据用户id查询")
-void testJoinWithPurseUserId() {
+@DisplayName("无查询条件")
+void testJoin(CapturedOutput output) {
     UserCustomJoinQO qo = new UserCustomJoinQO();
-    qo.setUserId(122L);
     userDao.findAll(qo);
 }
 ```
@@ -329,16 +326,68 @@ void testJoinWithPurseUserId() {
 ##### 生成的查询语句
 
 ```sql
-select distinct user0_.id           as id1_2_,
-                user0_.created_time as created_2_2_,
-                user0_.email        as email3_2_,
-                user0_.name         as name4_2_
+select user0_.id           as id1_2_,
+       user0_.created_time as created_2_2_,
+       user0_.email        as email3_2_,
+       user0_.name         as name4_2_
 from t_user user0_
          left outer join
      t_order orders1_ on user0_.id = orders1_.user_id
          left outer join
      t_purse purse2_ on user0_.id = purse2_.user_id
-where user0_.id = 122
+```
+
+### 方法三: 在`QueryObject`的`customPredicate`里值手动执行联表操作，如：
+
+这里在`customPredicate`里手动判断`orderNo2`不为空则进行join查询操作,实际效果和`customJoin`一样. 两个方法和互换.
+
+```java
+public class UserCustomJoinQO2 extends QueryObject<User> {
+    /**
+     * 根据订单号查询
+     */
+    private String orderNo2;
+
+    @Override
+    protected List<Predicate> customPredicate(Root<User> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
+        if (orderNo2 == null || orderNo2.isEmpty()) {
+            return super.customPredicate(root, cq, cb);
+        }
+
+        Join<User, ?> join = createJoin(root, User_.ORDERS);
+        Predicate predicate = cb.equal(join.get(Order_.ORDER_NO), orderNo2);
+        return List.of(predicate);
+    }
+}
+```
+
+##### 测试用例
+
+```java
+
+@Test
+@DisplayName("orderNo 有则手动改执行join查询")
+void testUserJoinOrderNo2(CapturedOutput output) {
+    UserCustomJoinQO2 qo = new UserCustomJoinQO2();
+    qo.setOrderNo2("201109UUUU");
+    userDao.findAll(qo);
+}
+```
+
+##### 生成的查询语句
+
+```sql
+select user0_.id           as id1_2_,
+       user0_.created_time as created_2_2_,
+       user0_.email        as email3_2_,
+       user0_.name         as name4_2_
+from t_user user0_
+         inner join
+     t_order orders1_ on user0_.id = orders1_.user_id
+where orders1_.order_no = ?
+
+-- 参数绑定
+-- o.h.type.descriptor.sql.BasicBinder      : binding parameter [1] as [VARCHAR] - [201109UUUU]
 ```
 
 具体使用方法请看[jpa-query-object-test](jpa-query-object-test)模块
