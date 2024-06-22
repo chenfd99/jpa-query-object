@@ -14,7 +14,7 @@
     <name>jpa-query-object-test</name>
     <groupId>io.github.chenfd99</groupId>
     <artifactId>jpa-query-object-test</artifactId>
-    <version>0.13.1-SNAPSHOT</version>
+    <version>0.13.2-SNAPSHOT</version>
     <packaging>jar</packaging>
     <description>jpa query object test</description>
     <url>https://github.com/chenfd99/jpa-query-object</url>

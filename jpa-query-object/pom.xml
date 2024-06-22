@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.chenfd99</groupId>
-    <version>0.13.1-SNAPSHOT</version>
+    <version>0.13.2-SNAPSHOT</version>
     <artifactId>jpa-query-object</artifactId>
     <name>jpa-query-object</name>
     <description>jpa Specification query object</description>
