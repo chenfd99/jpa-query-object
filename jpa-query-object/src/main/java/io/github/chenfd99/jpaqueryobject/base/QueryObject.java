@@ -139,16 +139,26 @@ public abstract class QueryObject<T> implements Specification<T> {
         return predicates;
     }
 
-    protected Join<T, ?> createJoin(Root<T> root, QField qf, Field field) {
-        String joinName = qf.joinName();
 
+    protected Join<T, ?> createJoin(Root<T> root, QField qf) {
+        return createJoin(root, qf.joinName(), qf.joinType());
+    }
+
+    protected Join<T, ?> createJoin(Root<T> root, String joinName) {
+        return createJoin(root, joinName, JoinType.INNER);
+    }
+
+    protected Join<T, ?> createJoin(Root<T> root, String joinName, JoinType type) {
+        if (joinName == null || joinName.isEmpty() || type == null) {
+            return null;
+        }
         //已经 join 了
-        Join<T, ?> join = getJoin(root, joinName, qf.joinType());
+        Join<T, ?> join = getJoin(root, joinName, type);
         if (join != null) {
             return join;
         }
 
-        return root.join(joinName, qf.joinType());
+        return root.join(joinName, type);
     }
 
     protected Join<T, ?> getJoin(Root<T> root, String joinName, JoinType joinType) {
@@ -162,6 +172,9 @@ public abstract class QueryObject<T> implements Specification<T> {
                 .orElse(null);
     }
 
+    protected Join<T, ?> getJoin(Root<T> root, String joinName) {
+        return getJoin(root, joinName, JoinType.INNER);
+    }
 
     protected Object getFieldValue(Field field) {
         try {
@@ -184,7 +197,7 @@ public abstract class QueryObject<T> implements Specification<T> {
         Join<T, ?> join = null;
         //join 那么不为空 并且 强制join 或者有值 执行join操作
         if (!qf.joinName().isEmpty() && (qf.forceJoin() || fieldValue != null)) {
-            join = createJoin(root, qf, field);
+            join = createJoin(root, qf);
         }
 
         if (fieldValue == null) {
