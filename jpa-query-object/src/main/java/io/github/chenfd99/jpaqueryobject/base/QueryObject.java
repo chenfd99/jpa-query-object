@@ -148,7 +148,7 @@ public abstract class QueryObject<T> implements Specification<T> {
     }
 
     protected Join<T, ?> createJoin(Root<T> root, String joinName, JoinType type) {
-        if (joinName == null || joinName.isEmpty() || type == null) {
+        if (joinName == null || joinName.trim().isBlank() || type == null) {
             return null;
         }
         //已经 join 了
@@ -161,7 +161,7 @@ public abstract class QueryObject<T> implements Specification<T> {
     }
 
     protected Join<T, ?> getJoin(Root<T> root, String joinName, JoinType joinType) {
-        if (joinName == null || joinName.trim().isEmpty() || joinType == null) {
+        if (joinName == null || joinName.trim().isBlank() || joinType == null) {
             return null;
         }
         return root.getJoins().stream()
