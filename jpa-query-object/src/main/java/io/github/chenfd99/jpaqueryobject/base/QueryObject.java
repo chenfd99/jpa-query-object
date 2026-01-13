@@ -3,10 +3,10 @@ package io.github.chenfd99.jpaqueryobject.base;
 import io.github.chenfd99.jpaqueryobject.annotation.QField;
 import io.github.chenfd99.jpaqueryobject.annotation.QFields;
 import jakarta.persistence.criteria.*;
-import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,9 +25,7 @@ public abstract class QueryObject<T> implements Specification<T> {
     }
 
     @Override
-    public Predicate toPredicate(@NonNull Root<T> root,
-                                 @NonNull CriteriaQuery<?> cq,
-                                 @NonNull CriteriaBuilder cb) {
+    public Predicate toPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
         List<Predicate> predicates = new ArrayList<>();
         ofNullable(customJoin(root, cq, cb)).ifPresent(predicates::addAll);
 
@@ -70,7 +68,9 @@ public abstract class QueryObject<T> implements Specification<T> {
             fields.addAll(Arrays.asList(searchType.getDeclaredFields()));
         }
 
-        return fields;
+        return fields.stream()
+                .filter(field -> !Modifier.isStatic(field.getModifiers()) && !Modifier.isFinal(field.getModifiers()))
+                .toList();
     }
 
 
