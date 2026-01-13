@@ -2,8 +2,8 @@ package io.github.chenfd99.jpaqueryobjecttest.utils;
 
 import org.junit.platform.commons.util.AnnotationUtils;
 
-import javax.persistence.Column;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Table;
 import java.lang.reflect.Field;
 import java.util.List;
 

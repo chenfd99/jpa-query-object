@@ -2,12 +2,15 @@ package io.github.chenfd99.jpaqueryobject.base;
 
 import io.github.chenfd99.jpaqueryobject.annotation.QField;
 import io.github.chenfd99.jpaqueryobject.annotation.QFields;
+import jakarta.persistence.criteria.*;
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.domain.Specification;
 
-import javax.persistence.criteria.*;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.util.Optional.ofNullable;
 
 
 /**
@@ -22,22 +25,15 @@ public abstract class QueryObject<T> implements Specification<T> {
     }
 
     @Override
-    public Predicate toPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
+    public Predicate toPredicate(@NonNull Root<T> root,
+                                 @NonNull CriteriaQuery<?> cq,
+                                 @NonNull CriteriaBuilder cb) {
         List<Predicate> predicates = new ArrayList<>();
-        List<Predicate> joinPredicates = customJoin(root, cq, cb);
-        if (joinPredicates != null && !joinPredicates.isEmpty()) {
-            predicates.addAll(joinPredicates);
-        }
+        ofNullable(customJoin(root, cq, cb)).ifPresent(predicates::addAll);
 
-        Boolean distinct = distinct();
-        if (distinct != null) {
-            cq.distinct(distinct);
-        }
+        ofNullable(distinct()).ifPresent(cq::distinct);
 
-        List<Predicate> customPredicate = customPredicate(root, cq, cb);
-        if (customPredicate != null && !customPredicate.isEmpty()) {
-            predicates.addAll(customPredicate);
-        }
+        ofNullable(customPredicate(root, cq, cb)).ifPresent(predicates::addAll);
 
         predicates.addAll(toSpecWithLogicType(root, cq, cb));
 
@@ -79,23 +75,10 @@ public abstract class QueryObject<T> implements Specification<T> {
 
 
     protected List<Predicate> toSpecWithLogicType(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
-        List<Field> fields = getAllFields();
         List<Predicate> predicates = new ArrayList<>();
-        for (Field field : fields) {
+        for (Field field : getAllFields()) {
 
-            boolean fieldAccessible = field.isAccessible();
-            if (!fieldAccessible) {
-                field.setAccessible(true);
-            }
-
-            List<Predicate> fieldPredicates = handleQFieldAnno(root, cq, cb, field);
-            if (fieldPredicates != null && !fieldPredicates.isEmpty()) {
-                predicates.addAll(fieldPredicates);
-            }
-
-            if (!fieldAccessible) {
-                field.setAccessible(false);
-            }
+            ofNullable(handleQField(root, cq, cb, field)).ifPresent(predicates::addAll);
         }
 
         return predicates.stream()
@@ -103,6 +86,22 @@ public abstract class QueryObject<T> implements Specification<T> {
                 .collect(Collectors.toList());
     }
 
+
+    protected List<Predicate> handleQField(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field) {
+
+        boolean fieldAccessible = field.canAccess(this);
+        if (!fieldAccessible) {
+            field.setAccessible(true);
+        }
+
+        List<Predicate> fieldPredicates = handleQFieldAnno(root, cq, cb, field);
+
+        if (!fieldAccessible) {
+            field.setAccessible(false);
+        }
+
+        return fieldPredicates;
+    }
 
     protected List<Predicate> handleQFieldAnno(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field) {
         List<Predicate> predicates = new ArrayList<>();

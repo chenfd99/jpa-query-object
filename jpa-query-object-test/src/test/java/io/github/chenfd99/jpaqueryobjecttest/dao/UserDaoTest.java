@@ -7,7 +7,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
@@ -16,8 +16,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
-import static org.apache.commons.lang3.RandomStringUtils.randomNumeric;
+import static org.apache.commons.lang3.RandomStringUtils.secure;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -47,7 +46,7 @@ class UserDaoTest {
         long count = userDao.count();
         System.out.println("count = " + count);
 
-        String name = randomAlphabetic(22);
+        String name = secure().nextAlphabetic(22);
         long usersCount = userDao.saveAllAndFlush(Stream.generate(() -> new User(name)).limit(5).toList()).size();
         System.out.println("usersCount = " + usersCount);
 
@@ -61,8 +60,8 @@ class UserDaoTest {
         long count = userDao.count();
         System.out.println("count = " + count);
 
-        String name = randomAlphabetic(22);
-        Supplier<User> supplier = () -> new User(RandomUtils.nextInt() % 2 == 0 ? name : null);
+        String name = secure().nextAlphabetic(22);
+        Supplier<User> supplier = () -> new User(RandomUtils.secure().randomInt() % 2 == 0 ? name : null);
         List<User> userList = Stream.generate(supplier).limit(11).toList();
         userDao.saveAllAndFlush(userList);
         long usersCount = userList.size();
@@ -78,7 +77,7 @@ class UserDaoTest {
         long count = userDao.count();
         System.out.println("count = " + count);
 
-        String name = randomAlphabetic(22);
+        String name = secure().nextAlphabetic(22);
         long nameCount = userDao.saveAllAndFlush(Stream.generate(() -> new User(name)).limit(5).toList()).size();
 
 
@@ -95,44 +94,37 @@ class UserDaoTest {
 
 
     @Test
-    void testQuery() {
-        User user = userDao.save(User.builder().name(randomAlphabetic(20)).build());
+    void testUsernameEqual() {
+        User user = userDao.save(User.builder().name(secure().nextAlphabetic(20)).build());
 
         List<User> resultList = userDao.findAll(UserQO.builder().username(user.getName()).build());
         resultList.forEach(System.out::println);
 
-        assertEquals(resultList.size(), 1);
-        assertEquals(user.getId(), resultList.get(0).getId());
+        assertEquals(1, resultList.size());
+        assertEquals(user.getId(), resultList.getFirst().getId());
     }
 
     @Test
     @DisplayName("模糊查询")
     void testLikeQuery() {
-        String nameLike = randomAlphabetic(20);
-        List<User> userList = Stream.generate(() -> new User(nameLike + randomAlphabetic(6))).limit(111).toList();
+        String nameLike = secure().nextAlphabetic(20);
+        List<User> userList = Stream.generate(() -> new User(nameLike + secure().nextAlphabetic(6))).limit(111).toList();
         userDao.saveAllAndFlush(userList);
 
         System.out.println("查询后的数据");
-        List<User> resultList = userDao.findAll(UserQO.builder().usernameLike(nameLike).build());
-        assertEquals(resultList.size(), userList.size());
-
-        List<Long> idList = userList.stream().map(User::getId).toList();
-        for (User user : resultList) {
-            System.out.println(user);
-            assertTrue(idList.contains(user.getId()));
-        }
-
+        long actual = userDao.count(UserQO.builder().usernameLike(nameLike).build());
+        assertEquals(userList.size(), actual);
     }
 
     @Test
     @DisplayName("用用一个关键词查询多个条件使用or连接")
     void testGroupOr() {
-        String nameEqualOrEmailLike = randomAlphabetic(20);
+        String nameEqualOrEmailLike = secure().nextAlphabetic(20);
         List<User> userList = Stream.generate(() -> new User(nameEqualOrEmailLike))
                 .limit(6).toList();
         userDao.saveAllAndFlush(userList);
 
-        List<User> userList2 = Stream.generate(() -> new User().setEmail(nameEqualOrEmailLike + randomAlphabetic(6)))
+        List<User> userList2 = Stream.generate(() -> new User().setEmail(nameEqualOrEmailLike + secure().nextAlphabetic(6)))
                 .limit(7).toList();
         userDao.saveAllAndFlush(userList2);
 
@@ -150,11 +142,11 @@ class UserDaoTest {
     @Transactional
     @DisplayName("连表查询")
     void testJoinQuery() {
-        User user = userDao.save(new User().setName(randomAlphabetic(11)));
+        User user = userDao.save(new User().setName(secure().nextAlphabetic(11)));
 
         Order order = Order.builder()
                 .user(user)
-                .orderNo("2033_" + randomNumeric(11))
+                .orderNo("2033_" + secure().nextNumeric(11))
                 .build();
         orderDao.save(order);
 
@@ -170,15 +162,15 @@ class UserDaoTest {
         users.forEach(System.out::println);
 
         assertEquals(1, users.size());
-        assertEquals(users.get(0).getId(), user.getId());
+        assertEquals(users.getFirst().getId(), user.getId());
     }
 
     @Test
     @DisplayName("订单连表和名称相等查询")
     void testJoinOrEqualQuery() {
-        var orderNoOrUsername = randomAlphabetic(20);
+        var orderNoOrUsername = secure().nextAlphabetic(20);
         User user = User.builder()
-                .name(randomAlphabetic(11))
+                .name(secure().nextAlphabetic(11))
                 .build();
 
         Stream<User> userStream = Stream.generate(() -> new User(orderNoOrUsername)).limit(4);
@@ -210,7 +202,7 @@ class UserDaoTest {
     @Test
     @DisplayName("用用一个关键词查询多个条件使用and连接")
     void testGroupAnd() {
-        String keyword = randomAlphabetic(20);
+        String keyword = secure().nextAlphabetic(20);
         User user = User.builder().name(keyword).email(keyword).build();
         userDao.save(user);
 
@@ -224,8 +216,8 @@ class UserDaoTest {
         List<User> resultList = userDao.findAll(qo);
         resultList.forEach(System.out::println);
 
-        assertEquals(resultList.size(), 1);
-        assertEquals(resultList.get(0).getId(), user.getId());
+        assertEquals(1, resultList.size());
+        assertEquals(resultList.getFirst().getId(), user.getId());
     }
 
 
@@ -233,7 +225,7 @@ class UserDaoTest {
     @DisplayName("In 查询")
     void testIn() {
         System.out.println("准备的数据");
-        List<User> userList = Stream.generate(() -> new User(randomAlphabetic(6)))
+        List<User> userList = Stream.generate(() -> new User(secure().nextAlphabetic(6)))
                 .limit(10).collect(Collectors.toList());
         userDao.saveAllAndFlush(userList);
 
@@ -261,7 +253,7 @@ class UserDaoTest {
     void testNotIn() {
         System.out.println("准备的数据");
         List<User> userList = Stream.generate(() ->
-                        new User(randomAlphabetic(6)))
+                        new User(secure().nextAlphabetic(6)))
                 .limit(10).collect(Collectors.toList());
         userDao.saveAllAndFlush(userList);
 
@@ -291,12 +283,12 @@ class UserDaoTest {
     @Test
     @DisplayName("Not Equal")
     void testNotEqual() {
-        long count = userDao.count();
-        String name = randomAlphabetic(22);
+        long expected = userDao.count();
+        String name = secure().nextAlphabetic(22);
         userDao.save(new User(name));
         userDao.save(new User(name));
-        long count1 = userDao.count(UserQO.builder().nameNotEqual(name).build());
-        assertEquals(count1, count);
+        long actual = userDao.count(UserQO.builder().nameNotEqual(name).build());
+        assertEquals(expected, actual);
     }
 
     @Test

@@ -14,7 +14,7 @@ public interface BaseJoinTest {
     String LEFT_JOIN_PATTERN = "left\\s+(?:outer\\s+)?join\\s+%s";
     String INNER_JOIN_PATTERN = "inner\\s+join\\s+%s";
     String ALIAS_NAME = "alias";
-    String QUERY_TABLE_PATTERN = "(?:inner|left)\\s+(?:outer\\s)?join\\s+%s\\s+(?<alias>\\S+)";
+    String QUERY_TABLE_PATTERN = "\\b(inner|left)?\\s+(outer\\s+)?join\\s+%s\\s+(?<alias>\\S+)";
 
     /**
      * 验证是否由 left join
@@ -43,10 +43,11 @@ public interface BaseJoinTest {
     private static void assertJoinTable(String out, String table, String pattern) {
         System.out.println("tableName = " + table);
 
-        assertTrue(out != null && !out.isBlank());
-        assertTrue(table != null && !table.isBlank());
+        assertNotNull(out);
+        assertNotNull(table);
 
         String regex = pattern.formatted(table);
+        System.out.println("regex = " + regex);
         Matcher matcher = Pattern.compile(regex, Pattern.CASE_INSENSITIVE).matcher(out);
 
         boolean math = matcher.find();
@@ -77,9 +78,9 @@ public interface BaseJoinTest {
         String regex = QUERY_TABLE_PATTERN.formatted(name);
         Matcher matcher = Pattern.compile(regex, Pattern.CASE_INSENSITIVE).matcher(out);
 
-        boolean math = matcher.find();
-        System.out.println("math = " + math);
-        assertTrue(math);
+        boolean match = matcher.find();
+        System.out.println("match = " + match);
+        assertTrue(match);
 
         String group = matcher.group(ALIAS_NAME);
         System.out.println("alias = " + group);

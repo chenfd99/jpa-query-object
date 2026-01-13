@@ -7,20 +7,20 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.18</version>
+        <version>4.0.1</version>
         <relativePath/>
     </parent>
 
     <name>jpa-query-object-test</name>
     <groupId>io.github.chenfd99</groupId>
     <artifactId>jpa-query-object-test</artifactId>
-    <version>0.13.2-SNAPSHOT</version>
+    <version>0.15.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <description>jpa query object test</description>
     <url>https://github.com/chenfd99/jpa-query-object</url>
 
     <properties>
-        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
     </properties>
 
     <dependencies>
@@ -55,14 +55,14 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-jpamodelgen</artifactId>
-            <version>${hibernate.version}</version>
-            <optional>true</optional>
             <scope>provided</scope>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -79,8 +79,8 @@
                     <encoding>UTF-8</encoding>
                     <annotationProcessorPaths>
                         <path>
-                            <groupId>org.hibernate</groupId>
-                            <artifactId>hibernate-jpamodelgen</artifactId>
+                            <groupId>org.hibernate.orm</groupId>
+                            <artifactId>hibernate-processor</artifactId>
                             <version>${hibernate.version}</version>
                         </path>
                         <path>

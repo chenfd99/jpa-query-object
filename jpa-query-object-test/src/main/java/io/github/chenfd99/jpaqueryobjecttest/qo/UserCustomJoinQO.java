@@ -6,7 +6,8 @@ import io.github.chenfd99.jpaqueryobjecttest.entity.User;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User_;
 import lombok.*;
 
-import javax.persistence.criteria.*;
+import jakarta.persistence.criteria.*;
+
 import java.util.List;
 
 
