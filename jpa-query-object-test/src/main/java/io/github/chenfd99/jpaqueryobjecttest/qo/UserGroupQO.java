@@ -1,6 +1,7 @@
 package io.github.chenfd99.jpaqueryobjecttest.qo;
 
 import io.github.chenfd99.jpaqueryobject.annotation.QField;
+import io.github.chenfd99.jpaqueryobject.annotation.QFields;
 import io.github.chenfd99.jpaqueryobject.annotation.QGroup;
 import io.github.chenfd99.jpaqueryobject.base.QType;
 import io.github.chenfd99.jpaqueryobject.base.QueryObject;
@@ -31,6 +32,12 @@ public class UserGroupQO extends QueryObject<User> {
     @QGroup
     @QField(value = QType.EQUAL, name = User_.EMAIL)
     private String email;
+
+    @QGroup
+    @QFields(value = {@QField(value = QType.EQUAL, name = User_.NAME),
+            @QField(value = QType.EQUAL, name = User_.EMAIL)}, type = QFields.Type.OR)
+    @QField(value = QType.EQUAL, name = User_.EMAIL)
+    private String emailOrName;
 
     @QGroup
     @QField(value = QType.GREATER_THAN_OR_EQUAL, name = User_.CREATED_TIME)

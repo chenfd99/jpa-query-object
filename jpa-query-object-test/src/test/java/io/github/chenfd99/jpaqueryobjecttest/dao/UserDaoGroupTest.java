@@ -24,7 +24,7 @@ class UserDaoGroupTest {
 
     @Test
     @DisplayName("多个字段组合成一个or查询")
-    void testIn() {
+    void testGroup() {
         System.out.println("准备的数据");
 
         String email = secure().nextAlphabetic(6);
@@ -37,6 +37,7 @@ class UserDaoGroupTest {
                 //下面是一个 or 条件
                 .username(name)
                 .email(email)
+                .emailOrName("111")
                 .beginTime(LocalDateTime.now().minusDays(1))
                 //下面是一个 or 条件
                 .username1(name)
@@ -50,6 +51,12 @@ class UserDaoGroupTest {
         }
 
         assertEquals(userList.size(), users.size());
+    }
+
+    @Test
+    void testGroup2() {
+        UserGroupQO search = UserGroupQO.builder().emailOrName("email").build();
+        userDao.findAll(search);
     }
 
 
