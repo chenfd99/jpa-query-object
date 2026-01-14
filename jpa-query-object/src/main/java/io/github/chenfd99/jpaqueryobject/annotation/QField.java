@@ -42,13 +42,6 @@ public @interface QField {
      */
     JoinType joinType() default JoinType.INNER;
 
-    /**
-     * 是否强制join
-     * <p>
-     * force为true时会使root强制join，不管被注解的这个字段的值是否为null。
-     * force为false时，只有在被注解的这个字段的值不为null时去执行join
-     */
-    boolean forceJoin() default false;
 }
 
 
