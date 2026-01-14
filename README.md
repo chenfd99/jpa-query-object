@@ -390,4 +390,57 @@ where orders1_.order_no = ?
 -- o.h.type.descriptor.sql.BasicBinder      : binding parameter [1] as [VARCHAR] - [201109UUUU]
 ```
 
+## 使用`QGroup`把多个字段组合成一个or条件
+
+同一个分组名称之间是用 `or` 连接, 不同的分组名称之间是用 `and` 连接,
+如果只有一个分组可以不要分组名称,多个分组要指定一个名称来区分
+
+### 用法
+
+```java
+public class UserGroupQO extends QueryObject<User> {
+    @QGroup
+    @QField(name = User_.NAME, value = QType.EQUAL)
+    private String username;
+
+    @QGroup
+    @QField(value = QType.EQUAL, name = User_.EMAIL)
+    private String email;
+
+    @QGroup
+    @QField(value = QType.GREATER_THAN_OR_EQUAL, name = User_.CREATED_TIME)
+    private LocalDateTime beginTime;
+
+    @QGroup("11sss")
+    @QField(name = User_.NAME, value = QType.EQUAL)
+    private String username1;
+
+    @QGroup("11sss")
+    @QField(value = QType.EQUAL, name = User_.EMAIL)
+    private String email1;
+}
+```
+
+### 生成的 sql
+
+```sql
+select
+    u1_0.id,
+    u1_0.created_time,
+    u1_0.email,
+    u1_0.name 
+from
+    t_user u1_0 
+where
+    (
+        u1_0.name=? 
+        or u1_0.email=? 
+        or u1_0.created_time>=?
+    ) 
+    and (
+        u1_0.name=? 
+        or u1_0.email=?
+    )
+``
+
 具体使用方法请看[jpa-query-object-test](jpa-query-object-test)模块
