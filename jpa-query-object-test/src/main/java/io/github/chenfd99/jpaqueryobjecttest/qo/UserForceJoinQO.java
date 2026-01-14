@@ -5,10 +5,8 @@ import io.github.chenfd99.jpaqueryobject.annotation.QFields;
 import io.github.chenfd99.jpaqueryobject.base.QueryObject;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User_;
-import lombok.*;
-
 import jakarta.persistence.criteria.JoinType;
-
+import lombok.*;
 
 
 @Setter
@@ -24,8 +22,8 @@ public class UserForceJoinQO extends QueryObject<User> {
      */
     @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
-    @QFields({@QField(joinName = User_.ORDERS, joinType = JoinType.INNER, forceJoin = true),
-            @QField(joinName = User_.PURSE, joinType = JoinType.LEFT, forceJoin = true)})
+    @QFields({@QField(joinName = User_.ORDERS, joinType = JoinType.INNER),
+            @QField(joinName = User_.PURSE, joinType = JoinType.LEFT)})
     private Long joinKeyword;
 
 

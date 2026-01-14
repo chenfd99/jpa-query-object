@@ -10,6 +10,7 @@ import io.github.chenfd99.jpaqueryobjecttest.entity.User_;
 import lombok.*;
 
 import jakarta.persistence.criteria.JoinType;
+
 import java.time.LocalDateTime;
 import java.util.Collection;
 
@@ -96,8 +97,8 @@ public class UserQO extends QueryObject<User> {
     /**
      * 订单号或者用户名称
      */
-    @QFields({@QField(joinName = User_.ORDERS, joinType = JoinType.LEFT, name = Order_.ORDER_NO),
-            @QField(name = User_.NAME)})
+    @QField(joinName = User_.ORDERS, joinType = JoinType.LEFT, name = Order_.ORDER_NO)
+    @QField(name = User_.NAME)
     private String orderNoOrUsername;
 
 
