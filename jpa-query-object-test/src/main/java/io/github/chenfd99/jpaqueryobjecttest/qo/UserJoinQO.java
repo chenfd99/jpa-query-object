@@ -6,10 +6,12 @@ import io.github.chenfd99.jpaqueryobject.base.QueryObject;
 import io.github.chenfd99.jpaqueryobjecttest.entity.Purse_;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User;
 import io.github.chenfd99.jpaqueryobjecttest.entity.User_;
+import jakarta.persistence.criteria.*;
 import lombok.*;
 
-import jakarta.persistence.criteria.JoinType;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -30,9 +32,11 @@ public class UserJoinQO extends QueryObject<User> {
      */
     @QField(joinName = User_.PURSE,
             joinType = JoinType.LEFT,
-            name = Purse_.USER,
+            name = Purse_.USER_ID,
             value = QType.EQUAL)
     private Long purseUserId;
+
+    private BigDecimal purseBalance;
 
 
     /**
@@ -57,5 +61,17 @@ public class UserJoinQO extends QueryObject<User> {
     @Override
     protected Boolean distinct() {
         return true;
+    }
+
+    @Override
+    protected List<Predicate> customPredicate(Root<User> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
+        List<Predicate> predicates = new ArrayList<>();
+        if (purseBalance != null) {
+            Join<?, ?> join = createJoin(root, User_.PURSE);
+            Predicate equalled = cb.equal(join.get(Purse_.BALANCE), purseBalance);
+            predicates.add(equalled);
+        }
+
+        return predicates;
     }
 }

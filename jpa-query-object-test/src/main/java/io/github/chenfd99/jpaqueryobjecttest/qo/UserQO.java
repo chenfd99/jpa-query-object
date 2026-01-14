@@ -97,8 +97,8 @@ public class UserQO extends QueryObject<User> {
     /**
      * 订单号或者用户名称
      */
-    @QField(joinName = User_.ORDERS, joinType = JoinType.LEFT, name = Order_.ORDER_NO)
-    @QField(name = User_.NAME)
+    @QFields( {@QField(joinName = User_.ORDERS, joinType = JoinType.LEFT, name = Order_.ORDER_NO),
+            @QField(name = User_.NAME)})
     private String orderNoOrUsername;
 
 

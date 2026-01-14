@@ -49,6 +49,17 @@ class UserDaoJoinTest implements BaseJoinTest {
 
 
     @Test
+    @DisplayName("根据钱包用户id自定义查询查询")
+    void testCustomJoinWithPurseUserId(CapturedOutput output) {
+        UserJoinQO qo = new UserJoinQO();
+        qo.setPurseBalance(new BigDecimal("1333"));
+        userDao.findAll(qo);
+
+        assertQueryCondition(output, Purse.class, Purse_.BALANCE);
+    }
+
+
+    @Test
     @DisplayName("其他条件")
     void testJoinWithOther(CapturedOutput output) {
         UserJoinQO qo = new UserJoinQO();
