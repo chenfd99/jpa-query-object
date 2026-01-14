@@ -2,6 +2,7 @@ package io.github.chenfd99.jpaqueryobject.base;
 
 import io.github.chenfd99.jpaqueryobject.annotation.QField;
 import io.github.chenfd99.jpaqueryobject.annotation.QFields;
+import io.github.chenfd99.jpaqueryobject.annotation.QGroup;
 import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -75,6 +76,8 @@ public abstract class QueryObject<T> implements Specification<T> {
 
     protected List<Predicate> toSpecWithLogicType(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
         List<Predicate> predicates = new ArrayList<>();
+        Map<String, List<Predicate>> groupMap = new HashMap<>();
+
         List<Field> fields = getAllFields();
         for (Field field : fields) {
 
@@ -83,7 +86,31 @@ public abstract class QueryObject<T> implements Specification<T> {
                 continue;
             }
 
-            predicates.addAll(fieldPredicates);
+            QGroup queryGroup = field.getAnnotation(QGroup.class);
+            if (queryGroup == null) {
+                predicates.addAll(fieldPredicates);
+                continue;
+            }
+
+            //处理 QGroup 逻辑
+            String groupName = queryGroup.value() == null || queryGroup.value().trim().isBlank()
+                    ? "default" : queryGroup.value();
+            List<Predicate> groupPredicates = groupMap.get(groupName);
+            if (groupPredicates == null) {
+                groupPredicates = new ArrayList<>(fieldPredicates);
+                groupMap.put(groupName, groupPredicates);
+            } else {
+                groupPredicates.addAll(fieldPredicates);
+            }
+        }
+
+        //把 QGroup 字段组合成 or 条件添加到 predicates里
+        for (String groupName : groupMap.keySet()) {
+            List<Predicate> ps = groupMap.get(groupName);
+            if (ps == null || ps.isEmpty()) {
+                continue;
+            }
+            predicates.add(cb.or(ps.toArray(new Predicate[0])));
         }
 
         return predicates.stream().filter(Objects::nonNull).toList();
