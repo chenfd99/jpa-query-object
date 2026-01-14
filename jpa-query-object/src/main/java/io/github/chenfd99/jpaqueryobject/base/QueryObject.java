@@ -220,7 +220,7 @@ public abstract class QueryObject<T> implements Specification<T> {
         }
 
 
-        String column = qf.name() == null || qf.name().isEmpty() ? field.getName() : qf.name();
+        String column = qf.name() == null || qf.name().trim().isBlank() ? field.getName() : qf.name();
         Path path = (join == null ? root : join).get(column);
         return getPredicateWithType(cb, qf.value(), path, fieldValue);
     }
