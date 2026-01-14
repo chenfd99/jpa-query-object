@@ -142,7 +142,7 @@ public abstract class QueryObject<T> implements Specification<T> {
         }
 
         if (qg.type() == QFields.Type.OR) {
-            predicates.add(cb.or(groupPredicates));
+            predicates.add(cb.or(groupPredicates.toArray(new Predicate[0])));
         } else if (qg.type() == QFields.Type.AND) {
             predicates.addAll(groupPredicates);
         }
