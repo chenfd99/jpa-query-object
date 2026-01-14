@@ -110,7 +110,12 @@ public abstract class QueryObject<T> implements Specification<T> {
             if (ps == null || ps.isEmpty()) {
                 continue;
             }
-            predicates.add(cb.or(ps.toArray(new Predicate[0])));
+
+            if (ps.size() == 1) {
+                predicates.add(ps.getFirst());
+            } else {
+                predicates.add(cb.or(ps.toArray(new Predicate[0])));
+            }
         }
 
         return predicates.stream().filter(Objects::nonNull).toList();
