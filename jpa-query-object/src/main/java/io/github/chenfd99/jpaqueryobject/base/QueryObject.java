@@ -33,10 +33,17 @@ public abstract class QueryObject<T> implements Specification<T> {
 
         ofNullable(customPredicate(root, cq, cb)).ifPresent(predicates::addAll);
 
-        predicates.addAll(toSpecWithLogicType(root, cq, cb));
+        Predicate fieldPredicate = toSpecWithLogicType(root, cq, cb);
+        if (fieldPredicate != null) {
+            predicates.add(fieldPredicate);
+        }
 
         if (predicates.isEmpty()) {
             return null;
+        }
+
+        if (predicates.size() == 1) {
+            return predicates.getFirst();
         }
 
         return cb.and(predicates.toArray(new Predicate[0]));
@@ -74,55 +81,58 @@ public abstract class QueryObject<T> implements Specification<T> {
     }
 
 
-    protected List<Predicate> toSpecWithLogicType(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
-        List<Predicate> predicates = new ArrayList<>();
-        Map<String, List<Predicate>> groupMap = new HashMap<>();
+    protected Predicate toSpecWithLogicType(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
+        Predicate condition = null;
+        Map<String, Predicate> groupMap = null;
 
         List<Field> fields = getAllFields();
         for (Field field : fields) {
 
-            List<Predicate> fieldPredicates = handleQField(root, cq, cb, field);
-            if (fieldPredicates == null) {
+            Predicate fieldPredicate = handleQField(root, cq, cb, field);
+            if (fieldPredicate == null) {
                 continue;
             }
 
             QGroup queryGroup = field.getAnnotation(QGroup.class);
+
+            //QGroup为空,组合进之前得条件里
             if (queryGroup == null) {
-                predicates.addAll(fieldPredicates);
+                condition = condition == null ? fieldPredicate : cb.and(condition, fieldPredicate);
                 continue;
             }
 
-            //处理 QGroup 逻辑
-            String groupName = queryGroup.value() == null || queryGroup.value().trim().isBlank()
+            //QGroup不为空, 放进groupMap里等循环结束后处理
+            String groupName = queryGroup.value() == null || queryGroup.value().trim().isEmpty()
                     ? "default" : queryGroup.value();
-            List<Predicate> groupPredicates = groupMap.get(groupName);
-            if (groupPredicates == null) {
-                groupPredicates = new ArrayList<>(fieldPredicates);
-                groupMap.put(groupName, groupPredicates);
-            } else {
-                groupPredicates.addAll(fieldPredicates);
+            if (groupMap == null) {
+                groupMap = new HashMap<>();
             }
+            Predicate groupCond = groupMap.get(groupName);
+            if (groupCond == null) {
+                groupMap.put(groupName, fieldPredicate);
+            } else {
+                groupMap.put(groupName, cb.or(groupCond, fieldPredicate));
+            }
+        }
+
+        if (groupMap == null) {
+            return condition;
         }
 
         //把 QGroup 字段组合成 or 条件添加到 predicates里
-        for (String groupName : groupMap.keySet()) {
-            List<Predicate> ps = groupMap.get(groupName);
-            if (ps == null || ps.isEmpty()) {
+        for (Predicate gp : groupMap.values()) {
+            if (gp == null) {
                 continue;
             }
 
-            if (ps.size() == 1) {
-                predicates.add(ps.getFirst());
-            } else {
-                predicates.add(cb.or(ps.toArray(new Predicate[0])));
-            }
+            condition = condition == null ? gp : cb.and(condition, gp);
         }
 
-        return predicates.stream().filter(Objects::nonNull).toList();
+        return condition;
     }
 
 
-    protected List<Predicate> handleQField(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field) {
+    protected Predicate handleQField(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field) {
 
         boolean fieldAccessible = field.canAccess(this);
         //如果是不可访问,修改可访问的属性
@@ -130,18 +140,18 @@ public abstract class QueryObject<T> implements Specification<T> {
             field.setAccessible(true);
         }
 
-        List<Predicate> fieldPredicates = handleQFieldAnno(root, cq, cb, field);
+        Predicate fieldPredicate = handleQFieldAnno(root, cq, cb, field);
 
         //如果之前是不可访问,恢复之前的属性值
         if (!fieldAccessible) {
             field.setAccessible(false);
         }
 
-        return fieldPredicates;
+        return fieldPredicate;
     }
 
-    protected List<Predicate> handleQFieldAnno(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field) {
-        List<Predicate> predicates = new ArrayList<>();
+    protected Predicate handleQFieldAnno(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field) {
+        Predicate predicate = null;
 
         Object fieldValue = getFieldValue(field);
 
@@ -152,16 +162,13 @@ public abstract class QueryObject<T> implements Specification<T> {
         //处理单个 QField
         QField qf = field.getAnnotation(QField.class);
         if (qf != null) {
-            Predicate predicate = createPredicate(root, cq, cb, field, qf, fieldValue);
-            if (predicate != null) {
-                predicates.add(predicate);
-            }
+            predicate = createPredicate(root, cq, cb, field, qf, fieldValue);
         }
 
         //处理 QFields
         QFields qg = field.getAnnotation(QFields.class);
         if (qg == null || qg.type() == null) {
-            return predicates;
+            return predicate;
         }
 
         List<Predicate> groupPredicates = Arrays.stream(qg.value())
@@ -170,16 +177,20 @@ public abstract class QueryObject<T> implements Specification<T> {
                 .toList();
 
         if (groupPredicates.isEmpty()) {
-            return predicates;
+            return predicate;
         }
 
         if (qg.type() == QFields.Type.OR) {
-            predicates.add(cb.or(groupPredicates.toArray(new Predicate[0])));
+            predicate = predicate == null
+                    ? cb.or(groupPredicates.toArray(new Predicate[0]))
+                    : cb.and(predicate, cb.or(groupPredicates.toArray(new Predicate[0])));
         } else if (qg.type() == QFields.Type.AND) {
-            predicates.addAll(groupPredicates);
+            predicate = predicate == null
+                    ? cb.and(groupPredicates.toArray(new Predicate[0]))
+                    : cb.and(predicate, cb.and(groupPredicates.toArray(new Predicate[0])));
         }
 
-        return predicates;
+        return predicate;
     }
 
 
