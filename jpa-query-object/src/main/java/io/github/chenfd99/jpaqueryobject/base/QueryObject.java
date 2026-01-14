@@ -8,7 +8,6 @@ import org.springframework.data.jpa.domain.Specification;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 
@@ -76,26 +75,32 @@ public abstract class QueryObject<T> implements Specification<T> {
 
     protected List<Predicate> toSpecWithLogicType(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
         List<Predicate> predicates = new ArrayList<>();
-        for (Field field : getAllFields()) {
+        List<Field> fields = getAllFields();
+        for (Field field : fields) {
 
-            ofNullable(handleQField(root, cq, cb, field)).ifPresent(predicates::addAll);
+            List<Predicate> fieldPredicates = handleQField(root, cq, cb, field);
+            if (fieldPredicates == null) {
+                continue;
+            }
+
+            predicates.addAll(fieldPredicates);
         }
 
-        return predicates.stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        return predicates.stream().filter(Objects::nonNull).toList();
     }
 
 
     protected List<Predicate> handleQField(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field) {
 
         boolean fieldAccessible = field.canAccess(this);
+        //如果是不可访问,修改可访问的属性
         if (!fieldAccessible) {
             field.setAccessible(true);
         }
 
         List<Predicate> fieldPredicates = handleQFieldAnno(root, cq, cb, field);
 
+        //如果之前是不可访问,恢复之前的属性值
         if (!fieldAccessible) {
             field.setAccessible(false);
         }
@@ -106,35 +111,42 @@ public abstract class QueryObject<T> implements Specification<T> {
     protected List<Predicate> handleQFieldAnno(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field) {
         List<Predicate> predicates = new ArrayList<>();
 
-        QField qf = field.getAnnotation(QField.class);
-        QFields qg = field.getAnnotation(QFields.class);
-        if (qf == null && qg == null) {
+        Object fieldValue = getFieldValue(field);
+
+        if (fieldValue == null) {
             return null;
         }
 
+        //处理单个 QField
+        QField qf = field.getAnnotation(QField.class);
         if (qf != null) {
-            Predicate predicate = createPredicate(root, cq, cb, field, qf);
+            Predicate predicate = createPredicate(root, cq, cb, field, qf, fieldValue);
             if (predicate != null) {
                 predicates.add(predicate);
             }
         }
 
+        //处理 QFields
+        QFields qg = field.getAnnotation(QFields.class);
         if (qg == null || qg.type() == null) {
             return predicates;
         }
 
-        Predicate[] groupPredicates = Arrays.stream(qg.value())
-                .map(qFiled -> createPredicate(root, cq, cb, field, qFiled))
+        List<Predicate> groupPredicates = Arrays.stream(qg.value())
+                .map(qFiled -> createPredicate(root, cq, cb, field, qFiled, fieldValue))
                 .filter(Objects::nonNull)
-                .toArray(Predicate[]::new);
+                .toList();
 
-        if (groupPredicates.length == 0) {
+        if (groupPredicates.isEmpty()) {
             return predicates;
         }
 
-        Predicate predicate = qg.type() == QFields.Type.OR ? cb.or(groupPredicates) : cb.and(groupPredicates);
+        if (qg.type() == QFields.Type.OR) {
+            predicates.add(cb.or(groupPredicates));
+        } else if (qg.type() == QFields.Type.AND) {
+            predicates.addAll(groupPredicates);
+        }
 
-        predicates.add(predicate);
         return predicates;
     }
 
@@ -190,21 +202,20 @@ public abstract class QueryObject<T> implements Specification<T> {
      * @param qf    字段注解
      */
     @SuppressWarnings({"rawtypes"})
-    protected Predicate createPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field, QField qf) {
-        Object fieldValue = getFieldValue(field);
-
-        Join<T, ?> join = null;
-        //join 那么不为空 并且 强制join 或者有值 执行join操作
-        if (!qf.joinName().isEmpty() && (qf.forceJoin() || fieldValue != null)) {
-            join = createJoin(root, qf);
-        }
-
+    protected Predicate createPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field, QField qf, Object fieldValue) {
         if (fieldValue == null) {
             return null;
         }
 
+        Join<T, ?> join = null;
+        //join 那么不为空 并且 强制join 或者有值 执行join操作
+        if (!qf.joinName().trim().isBlank()) {
+            join = createJoin(root, qf);
+        }
+
+
         //不查询String空条件
-        if (String.class.isAssignableFrom(fieldValue.getClass()) && ((String) fieldValue).trim().isEmpty()) {
+        if (fieldValue instanceof String && ((String) fieldValue).trim().isBlank()) {
             return null;
         }
 
