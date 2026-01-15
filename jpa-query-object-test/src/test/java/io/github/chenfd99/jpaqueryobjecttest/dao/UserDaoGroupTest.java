@@ -53,11 +53,25 @@ class UserDaoGroupTest {
         assertEquals(userList.size(), users.size());
     }
 
+    /**
+     * QFields 和 QField 混合使用
+     * 组合成一个条件为
+     * u1_0.email=?  QField条件
+     * and (u1_0.name=? or u1_0.email=?) QFields条件
+     */
     @Test
+    @DisplayName("QFields 和 QField 组合")
     void testGroup2() {
         UserGroupQO search = UserGroupQO.builder().emailOrName("email").build();
         userDao.findAll(search);
     }
 
+
+    @Test
+    @DisplayName("QGroup 只有一个")
+    void testGroup3() {
+        UserGroupQO search = UserGroupQO.builder().email("email").build();
+        userDao.findAll(search);
+    }
 
 }
