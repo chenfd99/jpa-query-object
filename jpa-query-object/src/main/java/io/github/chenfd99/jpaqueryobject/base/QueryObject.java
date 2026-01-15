@@ -24,6 +24,17 @@ public abstract class QueryObject<T> implements Specification<T> {
         return null;
     }
 
+    /**
+     * 判断是否忽略空字符串或仅包含空白字符的字符串
+     * 子类可以重写此方法来自定义行为
+     *
+     * @param str 待检查的字符串
+     * @return true表示忽略该字符串，false表示不忽略
+     */
+    protected boolean isIgnoreEmptyString(String str) {
+        return str.isEmpty() || str.trim().isEmpty();
+    }
+
     @Override
     public Predicate toPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
         List<Predicate> predicates = new ArrayList<>();
@@ -254,8 +265,8 @@ public abstract class QueryObject<T> implements Specification<T> {
         }
 
 
-        //不查询String空条件
-        if (fieldValue instanceof String && ((String) fieldValue).trim().isBlank()) {
+        //不查询String空条件或仅包含空白字符的条件
+        if (fieldValue instanceof String && isIgnoreEmptyString((String) fieldValue)) {
             return null;
         }
 
