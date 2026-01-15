@@ -33,9 +33,9 @@ public abstract class QueryObject<T> implements Specification<T> {
 
         ofNullable(customPredicate(root, cq, cb)).ifPresent(predicates::addAll);
 
-        Predicate fieldPredicate = toSpecWithLogicType(root, cq, cb);
-        if (fieldPredicate != null) {
-            predicates.add(fieldPredicate);
+        List<Predicate> fieldPredicates = toSpecWithLogicType(root, cq, cb);
+        if (fieldPredicates != null && !fieldPredicates.isEmpty()) {
+            predicates.addAll(fieldPredicates);
         }
 
         if (predicates.isEmpty()) {
@@ -81,9 +81,9 @@ public abstract class QueryObject<T> implements Specification<T> {
     }
 
 
-    protected Predicate toSpecWithLogicType(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
-        Predicate condition = null;
-        Map<String, Predicate> groupMap = null;
+    protected List<Predicate> toSpecWithLogicType(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb) {
+        List<Predicate> condition = new ArrayList<>();
+        Map<String, List<Predicate>> groupMap = null;
 
         List<Field> fields = getAllFields();
         for (Field field : fields) {
@@ -97,7 +97,7 @@ public abstract class QueryObject<T> implements Specification<T> {
 
             //QGroup为空,组合进之前得条件里
             if (queryGroup == null) {
-                condition = condition == null ? fieldPredicate : cb.and(condition, fieldPredicate);
+                condition.add(fieldPredicate);
                 continue;
             }
 
@@ -107,11 +107,13 @@ public abstract class QueryObject<T> implements Specification<T> {
             if (groupMap == null) {
                 groupMap = new HashMap<>();
             }
-            Predicate groupCond = groupMap.get(groupName);
-            if (groupCond == null) {
-                groupMap.put(groupName, fieldPredicate);
+            List<Predicate> groupConditions = groupMap.get(groupName);
+            if (groupConditions == null) {
+                groupConditions = new ArrayList<>();
+                groupConditions.add(fieldPredicate);
+                groupMap.put(groupName, groupConditions);
             } else {
-                groupMap.put(groupName, cb.or(groupCond, fieldPredicate));
+                groupConditions.add(fieldPredicate);
             }
         }
 
@@ -120,12 +122,12 @@ public abstract class QueryObject<T> implements Specification<T> {
         }
 
         //把 QGroup 字段组合成 or 条件添加到 predicates里
-        for (Predicate gp : groupMap.values()) {
-            if (gp == null) {
+        for (List<Predicate> gp : groupMap.values()) {
+            if (gp == null || gp.isEmpty()) {
                 continue;
             }
 
-            condition = condition == null ? gp : cb.and(condition, gp);
+            condition.add(gp.size() == 1 ? gp.getFirst() : cb.or(gp.toArray(new Predicate[0])));
         }
 
         return condition;
@@ -151,7 +153,7 @@ public abstract class QueryObject<T> implements Specification<T> {
     }
 
     protected Predicate handleQFieldAnno(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder cb, Field field) {
-        Predicate predicate = null;
+        Predicate fieldPredicate = null;
 
         Object fieldValue = getFieldValue(field);
 
@@ -162,35 +164,30 @@ public abstract class QueryObject<T> implements Specification<T> {
         //处理单个 QField
         QField qf = field.getAnnotation(QField.class);
         if (qf != null) {
-            predicate = createPredicate(root, cq, cb, field, qf, fieldValue);
+            fieldPredicate = createPredicate(root, cq, cb, field, qf, fieldValue);
         }
 
         //处理 QFields
         QFields qg = field.getAnnotation(QFields.class);
         if (qg == null || qg.type() == null) {
-            return predicate;
+            return fieldPredicate;
         }
 
-        List<Predicate> groupPredicates = Arrays.stream(qg.value())
+        List<Predicate> groupPredicateList = Arrays.stream(qg.value())
                 .map(qFiled -> createPredicate(root, cq, cb, field, qFiled, fieldValue))
                 .filter(Objects::nonNull)
                 .toList();
 
-        if (groupPredicates.isEmpty()) {
-            return predicate;
+        if (groupPredicateList.isEmpty()) {
+            return fieldPredicate;
         }
 
-        if (qg.type() == QFields.Type.OR) {
-            predicate = predicate == null
-                    ? cb.or(groupPredicates.toArray(new Predicate[0]))
-                    : cb.and(predicate, cb.or(groupPredicates.toArray(new Predicate[0])));
-        } else if (qg.type() == QFields.Type.AND) {
-            predicate = predicate == null
-                    ? cb.and(groupPredicates.toArray(new Predicate[0]))
-                    : cb.and(predicate, cb.and(groupPredicates.toArray(new Predicate[0])));
-        }
+        Predicate groupPredicate = qg.type() == QFields.Type.OR
+                ? cb.or(groupPredicateList.toArray(new Predicate[0]))
+                : cb.and(groupPredicateList.toArray(new Predicate[0]));
 
-        return predicate;
+
+        return fieldPredicate == null ? groupPredicate : cb.and(fieldPredicate, groupPredicate);
     }
 
 
